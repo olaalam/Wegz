@@ -59,10 +59,22 @@ export default function App() {
           path="/themes/edit/:id"
           element={<PrivateRoute><AppLayout><ThemeAdd /></AppLayout></PrivateRoute>}
         />
-<Route path="/admin/website/dashboard" element={<DesignStudio />} />
-<Route path="/admin/website/:section/settings" element={<SectionSettings />} />
-<Route path="/admin/website/:section/add" element={<SectionAdd />} />
-<Route path="/admin/website/:section/select" element={<SectionSelect />} />
+        <Route
+          path="/admin/website/dashboard"
+          element={<PrivateRoute><AppLayout><DesignStudio /></AppLayout></PrivateRoute>}
+        />
+        <Route
+          path="/admin/website/:section/settings"
+          element={<PrivateRoute><AppLayout><SectionSettings /></AppLayout></PrivateRoute>}
+        />
+        <Route
+          path="/admin/website/:section/add"
+          element={<PrivateRoute><AppLayout><SectionAdd /></AppLayout></PrivateRoute>}
+        />
+        <Route
+          path="/admin/website/:section/select"
+          element={<PrivateRoute><AppLayout><SectionSelect /></AppLayout></PrivateRoute>}
+        />
 
 
         <Route path="*" element={<Navigate to="/login" replace />} />

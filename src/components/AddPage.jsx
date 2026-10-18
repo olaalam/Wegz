@@ -130,11 +130,43 @@ export default function AddPage({
                     {isRTL ? "إضافة رابط" : "Add link"}
                   </button>
                 </div>
+              ) : field.type === "color" ? (
+                <div className="space-y-2">
+                  <div className="flex max-w-xs items-center gap-2.5 rounded-xl border border-[var(--border)] bg-[var(--background)] p-2 shadow-xs">
+                    <label className="relative flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-[var(--border)]">
+                      <span className="absolute inset-0" style={{ backgroundColor: values[field.name] || "#ffffff" }} />
+                      <input
+                        type="color"
+                        value={values[field.name] || "#000000"}
+                        onChange={(e) => updateValue(field.name, e.target.value)}
+                        className="absolute inset-0 cursor-pointer opacity-0"
+                      />
+                    </label>
+                    <input
+                      type="text"
+                      value={values[field.name] || ""}
+                      onChange={(e) => updateValue(field.name, e.target.value)}
+                      placeholder="#000000"
+                      className="w-full bg-transparent font-mono text-xs font-bold uppercase text-[var(--foreground)] outline-none"
+                    />
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {["#ffffff", "#000000", "#3b82f6", "#2563eb", "#8b5cf6", "#10b981", "#ef4444", "#f59e0b", "#1e293b"].map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => updateValue(field.name, c)}
+                        className="h-5 w-5 rounded-md border border-[var(--border)] transition hover:scale-110 active:scale-95"
+                        style={{ backgroundColor: c }}
+                      />
+                    ))}
+                  </div>
+                </div>
               ) : (
                 <input
                   id={field.name}
                   name={field.name}
-                  type={field.type === "color" ? "color" : field.type ?? "text"}
+                  type={field.type ?? "text"}
                   required={field.required}
                   value={values[field.name] ?? ""}
                   onChange={(event) => setValues((current) => ({ ...current, [field.name]: event.target.value }))}

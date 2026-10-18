@@ -58,24 +58,77 @@ function ImageField({ value, file, onFile, lang }) {
   );
 }
 
+const CURATED_PALETTE = [
+  "#ffffff", "#000000", "#3b82f6", "#2563eb", 
+  "#8b5cf6", "#10b981", "#ef4444", "#f59e0b", 
+  "#06b6d4", "#ec4899", "#1e293b", "#f8fafc"
+];
+
 function ColorField({ value, onChange }) {
+  const currentColor = value || "#ffffff";
+
   return (
-    <div className="flex max-w-xs items-center gap-3 rounded-2xl border border-slate-200/80 bg-slate-50/50 p-2 pe-4 focus-within:border-blue-500 focus-within:bg-white focus-within:ring-4 focus-within:ring-blue-500/10">
-      <label className="relative h-9 w-9 shrink-0 cursor-pointer overflow-hidden rounded-xl border border-slate-200 shadow-inner">
-        <span className="absolute inset-0" style={{ background: value || "#ffffff" }} />
-        <input
-          type="color"
-          value={value || "#000000"}
-          onChange={(e) => onChange(e.target.value)}
-          className="absolute inset-0 cursor-pointer opacity-0"
-        />
-      </label>
-      <input
-        value={value || ""}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="#000000"
-        className="w-full bg-transparent font-mono text-xs font-bold uppercase text-slate-800 outline-none"
-      />
+    <div className="space-y-2.5">
+      <div className="flex max-w-sm items-center gap-3 rounded-2xl border border-slate-200/90 bg-white p-2.5 shadow-xs transition-all focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10">
+        {/* Color preview circle with color input */}
+        <label className="group relative flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-slate-200/80 shadow-inner transition hover:scale-105 active:scale-95">
+          <span
+            className="absolute inset-0 transition-transform group-hover:scale-110"
+            style={{ backgroundColor: currentColor }}
+          />
+          <input
+            type="color"
+            value={currentColor.startsWith("#") ? currentColor : "#000000"}
+            onChange={(e) => onChange(e.target.value)}
+            className="absolute inset-0 cursor-pointer opacity-0"
+          />
+        </label>
+
+        {/* Hex input & Color format */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] font-bold text-slate-400">HEX</span>
+            <input
+              value={currentColor}
+              onChange={(e) => onChange(e.target.value)}
+              placeholder="#FFFFFF"
+              className="w-full bg-transparent font-mono text-xs font-bold uppercase text-slate-800 outline-none"
+            />
+          </div>
+        </div>
+
+        {/* Small live sample chip */}
+        <span
+          className="rounded-lg px-2 py-1 text-[10px] font-bold border border-slate-200/60 shadow-xs"
+          style={{
+            backgroundColor: currentColor,
+            color: currentColor === "#ffffff" || currentColor.toLowerCase() === "#fff" || currentColor === "#f8fafc" ? "#0f172a" : "#ffffff",
+          }}
+        >
+          Aa
+        </span>
+      </div>
+
+      {/* Quick Curated Color Swatches */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        {CURATED_PALETTE.map((c) => {
+          const isSelected = currentColor.toLowerCase() === c.toLowerCase();
+          return (
+            <button
+              key={c}
+              type="button"
+              onClick={() => onChange(c)}
+              className={`h-6 w-6 rounded-lg border transition-all hover:scale-110 active:scale-90 ${
+                isSelected
+                  ? "border-blue-600 ring-2 ring-blue-500/30 scale-105"
+                  : "border-slate-200/80 hover:border-slate-400"
+              }`}
+              style={{ backgroundColor: c }}
+              title={c}
+            />
+          );
+        })}
+      </div>
     </div>
   );
 }
