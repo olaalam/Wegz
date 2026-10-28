@@ -56,20 +56,34 @@ export const SECTION_MAP = {
   info: {
     key: "info",
     title: { ar: "معلومات عنا (1)", en: "Information 1" },
-    desc: { ar: "قسم المعلومات والتعريف الأول", en: "First info and description section" },
+    desc: { ar: "قسم المعلومات والتعريف الأول بالموقع والخدمات", en: "First info and description section" },
     icon: Info,
     color: "#10b981",
     fields: [
+      { name: "heading", type: "text", label: { ar: "العنوان الرئيسي", en: "Main Heading" } },
+      { name: "subheading", type: "textarea", label: { ar: "الوصف والمحتوى", en: "Description / Content" } },
+      { name: "image", type: "image", label: { ar: "الصورة التوضيحية", en: "Cover Image" } },
+      { name: "ctaText", type: "text", label: { ar: "نص زر الإجراء", en: "CTA Button Text" } },
+      { name: "ctaUrl", type: "text", label: { ar: "رابط زر الإجراء", en: "CTA Button URL" } },
+      { name: "bgColor", type: "color", label: { ar: "لون الخلفية", en: "Background Color" } },
+      { name: "textColor", type: "color", label: { ar: "لون النص", en: "Text Color" } },
       { name: "isVisible", type: "toggle", label: { ar: "تفعيل القسم", en: "Is Active" } }
     ]
   },
   info2: {
     key: "info2",
     title: { ar: "معلومات عنا (2)", en: "Information 2" },
-    desc: { ar: "قسم المعلومات والتعريف الثاني", en: "Second info and description section" },
+    desc: { ar: "قسم المعلومات والتعريف الثاني بالمميزات الإضافية", en: "Second info and description section" },
     icon: Sparkles,
     color: "#06b6d4",
     fields: [
+      { name: "heading", type: "text", label: { ar: "العنوان الرئيسي", en: "Main Heading" } },
+      { name: "subheading", type: "textarea", label: { ar: "الوصف والمحتوى", en: "Description / Content" } },
+      { name: "image", type: "image", label: { ar: "الصورة التوضيحية", en: "Cover Image" } },
+      { name: "ctaText", type: "text", label: { ar: "نص زر الإجراء", en: "CTA Button Text" } },
+      { name: "ctaUrl", type: "text", label: { ar: "رابط زر الإجراء", en: "CTA Button URL" } },
+      { name: "bgColor", type: "color", label: { ar: "لون الخلفية", en: "Background Color" } },
+      { name: "textColor", type: "color", label: { ar: "لون النص", en: "Text Color" } },
       { name: "isVisible", type: "toggle", label: { ar: "تفعيل القسم", en: "Is Active" } }
     ]
   },
@@ -80,6 +94,14 @@ export const SECTION_MAP = {
     icon: MessageSquare,
     color: "#f59e0b",
     fields: [
+      { name: "heading", type: "text", label: { ar: "عنوان القسم", en: "Section Heading" } },
+      { name: "subheading", type: "text", label: { ar: "العنوان الفرعي", en: "Subheading" } },
+      { name: "clientName", type: "text", label: { ar: "اسم العميل", en: "Client Name" } },
+      { name: "clientRole", type: "text", label: { ar: "الصفة / الوظيفة (مثال: عميل موثق)", en: "Client Role / Badge" } },
+      { name: "feedback", type: "textarea", label: { ar: "نص رأي العميل / التقييم", en: "Review / Testimonial Text" } },
+      { name: "rating", type: "text", label: { ar: "التقييم بالنجوم (1-5)", en: "Rating (1 to 5)" } },
+      { name: "bgColor", type: "color", label: { ar: "لون الخلفية", en: "Background Color" } },
+      { name: "textColor", type: "color", label: { ar: "لون النص", en: "Text Color" } },
       { name: "isVisible", type: "toggle", label: { ar: "تفعيل القسم", en: "Is Active" } }
     ]
   },
@@ -90,6 +112,14 @@ export const SECTION_MAP = {
     icon: PhoneCall,
     color: "#ec4899",
     fields: [
+      { name: "heading", type: "text", label: { ar: "العنوان الرئيسي", en: "Main Heading" } },
+      { name: "subheading", type: "textarea", label: { ar: "العنوان الفرعي / رسالة الترحيب", en: "Subheading / Welcome Text" } },
+      { name: "phone", type: "text", label: { ar: "رقم الهاتف / الواتساب", en: "Phone Number" } },
+      { name: "email", type: "text", label: { ar: "البريد الإلكتروني", en: "Email Address" } },
+      { name: "address", type: "text", label: { ar: "العنوان أو المدينة", en: "Address" } },
+      { name: "submitText", type: "text", label: { ar: "نص زر الإرسال", en: "Submit Button Text" } },
+      { name: "bgColor", type: "color", label: { ar: "لون الخلفية", en: "Background Color" } },
+      { name: "textColor", type: "color", label: { ar: "لون النص", en: "Text Color" } },
       { name: "isVisible", type: "toggle", label: { ar: "تفعيل القسم", en: "Is Active" } }
     ]
   },
@@ -100,6 +130,11 @@ export const SECTION_MAP = {
     icon: Footprints,
     color: "#64748b",
     fields: [
+      { name: "copyright", type: "text", label: { ar: "حقوق النشر والملكية", en: "Copyright Text" } },
+      { name: "text", type: "textarea", label: { ar: "نبذة الفوتر / الشعار", en: "Footer Description / Tagline" } },
+      { name: "links", type: "links", label: { ar: "روابط الفوتر", en: "Footer Navigation Links" } },
+      { name: "bgColor", type: "color", label: { ar: "لون الخلفية", en: "Background Color" } },
+      { name: "textColor", type: "color", label: { ar: "لون النص", en: "Text Color" } },
       { name: "isVisible", type: "toggle", label: { ar: "تفعيل القسم", en: "Is Active" } }
     ]
   }

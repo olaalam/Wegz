@@ -166,6 +166,34 @@ const SECTION_TEMPLATES = {
     }
   ],
 
+  info: [
+    {
+      id: "info-story",
+      titleEn: "Brand Story & Feature Showcase",
+      titleAr: "قصة العلامة التجارية واستعراض المميزات",
+      descEn: "Engaging about section with mission statement, cover image, and CTA",
+      descAr: "قسم تعريفي جذاب يشمل الرؤية والصورة التوضيحية وزر اتخاذ إجراء",
+      badge: "Brand Identity",
+      badgeColor: "bg-emerald-50 text-emerald-600 border-emerald-200",
+      features: ["Main Heading", "Rich Description", "Cover Image", "CTA Button"],
+      type: "info"
+    }
+  ],
+
+  info2: [
+    {
+      id: "info2-values",
+      titleEn: "Core Values & Key Advantages",
+      titleAr: "القيم الجوهرية والمزايا التنافسية",
+      descEn: "Highlight what sets your store apart with distinctive layout and visual elements",
+      descAr: "إبراز ما يميز متجرك بتنسيق بصري عصري وعناصر توضيحية بارزة",
+      badge: "Competitive Edge",
+      badgeColor: "bg-cyan-50 text-cyan-600 border-cyan-200",
+      features: ["Secondary Heading", "Feature Highlights", "Highlight Media", "Action Link"],
+      type: "info2"
+    }
+  ],
+
   contact: [
     {
       id: "contact-split-map",
@@ -416,7 +444,66 @@ function SectionPreviewCanvas({ section, item, variant, isRtl }) {
     );
   }
 
-  // Fallback visual simulation for any other sections (Info, Contact, Footer)
+  if (section === "contact") {
+    return (
+      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 rounded-xl border border-pink-100 bg-pink-50/50 p-3.5">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-pink-500 text-white font-bold text-xs">
+              <Mail className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-900">{item.heading || (isRtl ? "تواصل معنا" : "Contact Us")}</p>
+              <p className="text-[10px] text-slate-500">{item.phone || item.email || (isRtl ? "الهاتف والبريد والدعم" : "Phone & Email")}</p>
+            </div>
+          </div>
+          <span className="rounded-lg bg-pink-600 px-2.5 py-1 text-[10px] font-bold text-white shadow-xs">
+            {item.submitText || (isRtl ? "إرسال" : "Submit")}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  if (section === "footer") {
+    const links = Array.isArray(item.links) ? item.links : [];
+    return (
+      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-900 p-4 text-white shadow-sm">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+          <span className="font-extrabold tracking-tight">Wegz Store</span>
+          <div className="flex gap-3 text-[10px] text-slate-300">
+            {links.length > 0 ? (
+              links.slice(0, 3).map((l, i) => <span key={i}>{l.label}</span>)
+            ) : (
+              <><span>Home</span><span>Privacy</span><span>Terms</span></>
+            )}
+          </div>
+          <span className="text-[9px] text-slate-400">{item.copyright || "© 2026 Wegz"}</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (section === "info" || section === "info2") {
+    return (
+      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-emerald-100 bg-emerald-50/40 p-3.5">
+          <div className="space-y-1">
+            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-bold text-emerald-700">
+              {section === "info" ? "INFO 1" : "INFO 2"}
+            </span>
+            <h4 className="text-xs font-bold text-slate-900">{item.heading || item.title || (isRtl ? "معلومات عنا" : "About Us")}</h4>
+            <p className="text-[10px] text-slate-500 line-clamp-1">{item.subheading || (isRtl ? "وصف ومحتوى تعريفي" : "Story & details")}</p>
+          </div>
+          <span className="rounded-lg bg-emerald-600 px-2.5 py-1 text-[10px] font-bold text-white shadow-xs shrink-0">
+            {item.ctaText || (isRtl ? "المزيد" : "More")}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // Fallback visual simulation for any other sections
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
       <div className="flex items-center gap-3">
@@ -424,7 +511,7 @@ function SectionPreviewCanvas({ section, item, variant, isRtl }) {
           <CheckCircle2 className="h-5 w-5" />
         </div>
         <div>
-          <h4 className="text-xs font-extrabold text-slate-900">{item.brandName || item.title || "Custom Preset"}</h4>
+          <h4 className="text-xs font-extrabold text-slate-900">{item.heading || item.brandName || item.title || "Custom Preset"}</h4>
           <p className="text-[11px] text-slate-400">Active layout configured with responsive options</p>
         </div>
       </div>
@@ -442,7 +529,14 @@ export default function SectionSelect() {
   const { data, loading, error, refetch } = useGet(`/api/admin/sections/${section}`);
   const { mutate, loading: activating } = useMutation();
 
-  const records = data?.data || [];
+  const records = useMemo(() => {
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data.data)) return data.data;
+    if (Array.isArray(data.sections)) return data.sections;
+    if (data.data && typeof data.data === "object") return [data.data];
+    return [];
+  }, [data]);
   const templates = SECTION_TEMPLATES[section] || SECTION_TEMPLATES.header;
 
   const handleSetActive = async (record) => {

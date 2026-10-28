@@ -56,7 +56,8 @@ export default function SectionAdd() {
     }
 
     toast.success(isRtl ? "تمت إضافة العنصر بنجاح." : "Item added successfully.");
-    navigate("/admin/website/dashboard");
+    const newId = result.data?.data?._id || result.data?._id;
+    navigate(`/admin/website/${section}/settings${newId ? `?id=${newId}` : ""}`);
   };
 
   return (
@@ -66,7 +67,7 @@ export default function SectionAdd() {
         title={isRtl ? `إضافة إلى ${config.title.ar}` : `Add to ${config.title.en}`}
         fields={fields}
         onSubmit={handleSubmit}
-        onCancel={() => navigate("/admin/website/dashboard")}
+        onCancel={() => navigate(`/admin/website/${section}/settings`)}
         isLoading={loading}
         lang={lang}
         saveLabel={isRtl ? "إضافة" : "Add"}
