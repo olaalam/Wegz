@@ -26,7 +26,7 @@ export const SECTION_MAP = {
   header: {
     key: "header",
     title: { ar: "الهيدر (الرأس)", en: "Header" },
-    desc: { ar: "تحكمي في شعار الجيم وروابط القائمة وزر الاشتراك", en: "Manage the gym logo, navigation and membership button" },
+    desc: { ar: "تحكمي في الشعار وروابط التنقل والزر الرئيسي", en: "Manage the brand logo, navigation and primary action" },
     icon: Layout,
     color: "#3b82f6",
     fields: [
@@ -41,7 +41,7 @@ export const SECTION_MAP = {
   hero: {
     key: "hero",
     title: { ar: "القسم الرئيسي (الهيرو)", en: "Hero Section" },
-    desc: { ar: "عدّلي واجهة الجيم الرئيسية والعنوان وصورة التدريب", en: "Edit the gym's main banner, heading and training image" },
+    desc: { ar: "عدّلي الواجهة الرئيسية والعنوان والصورة", en: "Edit the main banner, heading and image" },
     icon: Home,
     color: "#8b5cf6",
     fields: [
@@ -50,21 +50,20 @@ export const SECTION_MAP = {
       { name: "image", type: "image", label: { ar: "صورة الغلاف", en: "Cover Image" } },
       { name: "ctaText", type: "text", label: { ar: "نص الزر", en: "CTA Text" } },
       { name: "ctaUrl", type: "text", label: { ar: "رابط الزر", en: "CTA URL" } },
+      { name: "bgColor", type: "color", label: { ar: "لون الخلفية", en: "Background Color" } },
+      { name: "textColor", type: "color", label: { ar: "لون النص", en: "Text Color" } },
       { name: "isVisible", type: "toggle", label: { ar: "تفعيل القسم", en: "Is Active" } }
     ]
   },
   info: {
     key: "info",
-    title: { ar: "عن الجيم", en: "About the Gym" },
-    desc: { ar: "قدمي الجيم ومميزاته وخدماته", en: "Introduce the gym, its benefits and services" },
+    title: { ar: "من نحن", en: "About Us" },
+    desc: { ar: "قدمي المكان وقصته وخدماته", en: "Introduce your brand, story and services" },
     icon: Info,
     color: "#10b981",
     fields: [
       { name: "heading", type: "text", label: { ar: "العنوان الرئيسي", en: "Main Heading" } },
       { name: "subheading", type: "textarea", label: { ar: "الوصف والمحتوى", en: "Description / Content" } },
-      { name: "image", type: "image", label: { ar: "الصورة التوضيحية", en: "Cover Image" } },
-      { name: "ctaText", type: "text", label: { ar: "نص زر الإجراء", en: "CTA Button Text" } },
-      { name: "ctaUrl", type: "text", label: { ar: "رابط زر الإجراء", en: "CTA Button URL" } },
       { name: "bgColor", type: "color", label: { ar: "لون الخلفية", en: "Background Color" } },
       { name: "textColor", type: "color", label: { ar: "لون النص", en: "Text Color" } },
       { name: "isVisible", type: "toggle", label: { ar: "تفعيل القسم", en: "Is Active" } }
@@ -72,16 +71,15 @@ export const SECTION_MAP = {
   },
   info2: {
     key: "info2",
-    title: { ar: "البرامج والتدريب", en: "Programs & Training" },
-    desc: { ar: "اعرضي أنواع التدريب والبرامج المتاحة", en: "Show the available training styles and programs" },
+    title: { ar: "المحتوى المميز", en: "Featured Content" },
+    desc: { ar: "اعرضي محتوى إضافيًا ورسائل مهمة", en: "Highlight supporting content and key messages" },
     icon: Sparkles,
     color: "#06b6d4",
     fields: [
       { name: "heading", type: "text", label: { ar: "العنوان الرئيسي", en: "Main Heading" } },
-      { name: "subheading", type: "textarea", label: { ar: "الوصف والمحتوى", en: "Description / Content" } },
+      { name: "paragraph", type: "textarea", label: { ar: "الوصف والمحتوى", en: "Description / Content" } },
       { name: "image", type: "image", label: { ar: "الصورة التوضيحية", en: "Cover Image" } },
-      { name: "ctaText", type: "text", label: { ar: "نص زر الإجراء", en: "CTA Button Text" } },
-      { name: "ctaUrl", type: "text", label: { ar: "رابط زر الإجراء", en: "CTA Button URL" } },
+      { name: "imagePosition", type: "text", label: { ar: "موضع الصورة", en: "Image Position" } },
       { name: "bgColor", type: "color", label: { ar: "لون الخلفية", en: "Background Color" } },
       { name: "textColor", type: "color", label: { ar: "لون النص", en: "Text Color" } },
       { name: "isVisible", type: "toggle", label: { ar: "تفعيل القسم", en: "Is Active" } }
@@ -89,17 +87,13 @@ export const SECTION_MAP = {
   },
   testimonials: {
     key: "testimonials",
-    title: { ar: "آراء العملاء", en: "Testimonials" },
-    desc: { ar: "اعرضي تجارب وآراء أعضاء الجيم", en: "Show gym members' stories and reviews" },
+    title: { ar: "آراء الزوار", en: "Testimonials" },
+    desc: { ar: "اعرضي تجارب وآراء العملاء", en: "Show customer stories and reviews" },
     icon: MessageSquare,
     color: "#f59e0b",
     fields: [
       { name: "heading", type: "text", label: { ar: "عنوان القسم", en: "Section Heading" } },
       { name: "subheading", type: "text", label: { ar: "العنوان الفرعي", en: "Subheading" } },
-      { name: "clientName", type: "text", label: { ar: "اسم العميل", en: "Client Name" } },
-      { name: "clientRole", type: "text", label: { ar: "الصفة / الوظيفة (مثال: عميل موثق)", en: "Client Role / Badge" } },
-      { name: "feedback", type: "textarea", label: { ar: "نص رأي العميل / التقييم", en: "Review / Testimonial Text" } },
-      { name: "rating", type: "text", label: { ar: "التقييم بالنجوم (1-5)", en: "Rating (1 to 5)" } },
       { name: "bgColor", type: "color", label: { ar: "لون الخلفية", en: "Background Color" } },
       { name: "textColor", type: "color", label: { ar: "لون النص", en: "Text Color" } },
       { name: "isVisible", type: "toggle", label: { ar: "تفعيل القسم", en: "Is Active" } }
@@ -107,8 +101,8 @@ export const SECTION_MAP = {
   },
   contact: {
     key: "contact",
-    title: { ar: "انضمي إلى النادي", en: "Join the Club" },
-    desc: { ar: "بيانات الجيم ومعلومات التواصل والانضمام", en: "Gym details, contact information and membership inquiries" },
+    title: { ar: "الحجز والتواصل", en: "Reservations & Contact" },
+    desc: { ar: "بيانات التواصل والحجوزات والاستفسارات", en: "Contact details, reservations and inquiries" },
     icon: PhoneCall,
     color: "#ec4899",
     fields: [
@@ -126,12 +120,13 @@ export const SECTION_MAP = {
   footer: {
     key: "footer",
     title: { ar: "الفوتر (تذييل الصفحة)", en: "Footer" },
-    desc: { ar: "عدّلي روابط الجيم وبيانات الحقوق في نهاية الصفحة", en: "Manage gym links and copyright details" },
+    desc: { ar: "عدّلي الروابط وبيانات الحقوق في نهاية الصفحة", en: "Manage footer links and copyright details" },
     icon: Footprints,
     color: "#64748b",
     fields: [
+      { name: "brandName", type: "text", label: { ar: "اسم المكان", en: "Brand Name" } },
       { name: "copyright", type: "text", label: { ar: "حقوق النشر والملكية", en: "Copyright Text" } },
-      { name: "text", type: "textarea", label: { ar: "نبذة الفوتر / الشعار", en: "Footer Description / Tagline" } },
+      { name: "description", type: "textarea", label: { ar: "نبذة الفوتر / الشعار", en: "Footer Description / Tagline" } },
       { name: "links", type: "links", label: { ar: "روابط الفوتر", en: "Footer Navigation Links" } },
       { name: "bgColor", type: "color", label: { ar: "لون الخلفية", en: "Background Color" } },
       { name: "textColor", type: "color", label: { ar: "لون النص", en: "Text Color" } },
@@ -149,7 +144,7 @@ export const GROUPS = [
     ]
   },
   {
-    title: { ar: "الرئيسية ومحتوى الجيم", en: "Home & Gym Content" },
+    title: { ar: "الرئيسية والمحتوى", en: "Home & Content" },
     items: [
       SECTION_MAP.hero,
       SECTION_MAP.info,
@@ -175,4 +170,108 @@ export const GYM_PRESETS = {
   testimonials: { match: { heading: "Enjoyed The Experience" } },
   contact: { match: { heading: "Join The Club" } },
   footer: { match: { copyright: "Copyright 2026 XTRA GYM. All Rights Reserved." } },
+};
+
+export const RESTAURANT_PRESETS = {
+  announcement: {
+    match: { text: "GOOD FOOD MAKES GREAT MOOD" },
+    values: {
+      text: "GOOD FOOD MAKES GREAT MOOD",
+      bgColor: "#242522",
+      textColor: "#f6f1e8",
+      isVisible: false,
+    },
+  },
+  header: {
+    match: { brandName: "Restaurant" },
+    values: {
+      brandName: "Restaurant",
+      bgColor: "#242522",
+      textColor: "#f6f1e8",
+      links: [
+        { label: "Home", url: "/", isActive: true, order: 1 },
+        { label: "Menus", url: "/our-menu", isActive: true, order: 2 },
+        { label: "Order", url: "/shop", isActive: true, order: 3 },
+        { label: "About", url: "/about-us", isActive: true, order: 4 },
+        { label: "Reserve", url: "/reserve-contact-2", isActive: true, order: 5 },
+        { label: "Contact", url: "/reserve-contact-2", isActive: true, order: 6 },
+      ],
+      isVisible: false,
+    },
+  },
+  hero: {
+    match: { title: "Good food makes great mood" },
+    values: {
+      title: "Good food makes great mood",
+      subtitle: "Not fast food, but good food fast.",
+      ctaText: "Reserve Your Table",
+      ctaUrl: "/reserve-contact-2",
+      bgColor: "#242522",
+      textColor: "#f6f1e8",
+      isVisible: false,
+    },
+  },
+  info: {
+    match: { heading: "Traditional & Family Recipes" },
+    values: {
+      heading: "Traditional & Family Recipes",
+      subheading: "A welcoming neighborhood table, serving familiar favorites and fresh flavors made for sharing.",
+      bgColor: "#f6f1e8",
+      textColor: "#242522",
+      isVisible: false,
+    },
+  },
+  info2: {
+    match: { heading: "Foods Menu" },
+    values: {
+      heading: "Foods Menu",
+      paragraph: "Browse seasonal starters, fresh salads, soups, and satisfying main dishes.",
+      imagePosition: "right",
+      image: "",
+      bgColor: "#242522",
+      textColor: "#f6f1e8",
+      isVisible: false,
+    },
+  },
+  testimonials: {
+    match: { heading: "Happy Visitors" },
+    values: {
+      heading: "Happy Visitors",
+      subheading: "Good meals and warm hospitality, remembered by our guests.",
+      bgColor: "#f6f1e8",
+      textColor: "#242522",
+      isVisible: false,
+    },
+  },
+  contact: {
+    match: { heading: "Reserve Your Table" },
+    values: {
+      heading: "Reserve Your Table",
+      subheading: "Planning a visit? Send us a reservation request and our team will be in touch.",
+      phone: "",
+      email: "",
+      address: "",
+      submitText: "Request a Table",
+      bgColor: "#242522",
+      textColor: "#f6f1e8",
+      isVisible: false,
+    },
+  },
+  footer: {
+    match: { copyright: "Copyright 2026 Restaurant. All Rights Reserved." },
+    values: {
+      brandName: "Restaurant",
+      copyright: "Copyright 2026 Restaurant. All Rights Reserved.",
+      description: "Good food makes great mood.",
+      links: [
+        { label: "Home", url: "/", isActive: true, order: 1 },
+        { label: "Menus", url: "/our-menu", isActive: true, order: 2 },
+        { label: "Reserve", url: "/reserve-contact-2", isActive: true, order: 3 },
+        { label: "Contact", url: "/reserve-contact-2", isActive: true, order: 4 },
+      ],
+      bgColor: "#171815",
+      textColor: "#f6f1e8",
+      isVisible: false,
+    },
+  },
 };

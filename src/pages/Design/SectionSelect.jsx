@@ -25,11 +25,12 @@ import {
   MapPin,
   CheckCircle2,
   Play,
-  Dumbbell
+  Dumbbell,
+  UtensilsCrossed
 } from "lucide-react";
 import { useGet } from "../../hooks/useGet";
 import { useMutation } from "../../hooks/useMutation";
-import { SECTION_MAP, GYM_PRESETS } from "./sectionsConfig";
+import { SECTION_MAP, GYM_PRESETS, RESTAURANT_PRESETS } from "./sectionsConfig";
 import { toast } from "sonner";
 
 // Distinct visual presets and configurations for EVERY section
@@ -224,12 +225,25 @@ const SECTION_TEMPLATES = {
   ]
 };
 
+const RESTAURANT_SECTION_LABELS = {
+  announcement: { en: "Restaurant Announcement", ar: "إعلان المطعم" },
+  header: { en: "Restaurant Header", ar: "هيدر المطعم" },
+  hero: { en: "Restaurant Hero", ar: "واجهة المطعم" },
+  info: { en: "Restaurant Story", ar: "قصتنا" },
+  info2: { en: "Foods Menu", ar: "قائمة الطعام" },
+  testimonials: { en: "Happy Visitors", ar: "آراء الزوار" },
+  contact: { en: "Reserve Your Table", ar: "احجزي طاولتك" },
+  footer: { en: "Restaurant Footer", ar: "تذييل المطعم" },
+};
+
 // Sub-component to render interactive preview of different section types
 function SectionPreviewCanvas({ section, item, variant, isRtl }) {
   const [rotatingLink, setRotatingLink] = useState(null);
 
   if (section === "header") {
     const isGymHeader = item.brandName === GYM_PRESETS.header.match.brandName;
+    const isRestaurantHeader = item.brandName === RESTAURANT_PRESETS.header.match.brandName;
+    const isInteractiveHeader = isGymHeader || isRestaurantHeader;
 
     return (
       <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
@@ -263,11 +277,11 @@ function SectionPreviewCanvas({ section, item, variant, isRtl }) {
 
         {/* Header Bar */}
         <div
-          className={`relative flex items-center justify-between px-4 py-3.5 transition-all ${isGymHeader ? "min-h-16 ps-40" : ""}`}
+          className={`relative flex items-center justify-between px-4 py-3.5 transition-all ${isGymHeader ? "min-h-16 ps-40" : isRestaurantHeader ? "min-h-16" : ""}`}
           style={{ backgroundColor: item.bgColor || "#ffffff", color: item.textColor || "#0f172a" }}
         >
           {/* Logo & Brand */}
-          <div className={`flex items-center gap-2 ${isGymHeader ? "group absolute start-5 -top-8 z-10 h-24 w-36 flex-col justify-center bg-white text-slate-950 shadow-sm" : ""}`}>
+          <div className={`flex items-center gap-2 ${isGymHeader ? "group absolute start-5 -top-8 z-10 h-24 w-36 flex-col justify-center bg-white text-slate-950 shadow-sm" : isRestaurantHeader ? "group" : ""}`}>
             {item.logo ? (
               <img
                 src={/^(https?:|blob:)/.test(item.logo) ? item.logo : `${import.meta.env.VITE_API_URL || ""}${item.logo}`}
@@ -279,7 +293,7 @@ function SectionPreviewCanvas({ section, item, variant, isRtl }) {
                 className={`flex items-center justify-center text-xs font-black ${isGymHeader ? "h-11 w-11 text-slate-950" : "h-8 w-8 rounded-lg bg-blue-500/10"}`}
                 style={!isGymHeader ? { color: item.textColor || "#3b82f6" } : undefined}
               >
-                {isGymHeader ? <Dumbbell className="h-9 w-9 transition-transform duration-700 group-hover:rotate-[360deg]" /> : (item.brandName || "W")[0].toUpperCase()}
+                {isGymHeader ? <Dumbbell className="h-9 w-9 transition-transform duration-700 group-hover:rotate-[360deg]" /> : isRestaurantHeader ? <UtensilsCrossed className="h-5 w-5 transition-transform duration-700 group-hover:rotate-[360deg]" /> : (item.brandName || "W")[0].toUpperCase()}
               </div>
             )}
             <span className="text-sm font-extrabold tracking-tight">{item.brandName || "Brand"}</span>
@@ -292,16 +306,16 @@ function SectionPreviewCanvas({ section, item, variant, isRtl }) {
               <span className="text-[11px] font-medium">{isRtl ? "ابحث عن المنتجات..." : "Search items..."}</span>
             </div>
           ) : (
-            <div className={`hidden min-w-0 items-center gap-3.5 whitespace-nowrap text-[11px] font-semibold opacity-85 sm:flex ${isGymHeader ? "ms-8 flex-1 justify-center overflow-x-auto scrollbar-none" : ""}`}>
+            <div className={`${isInteractiveHeader ? "flex" : "hidden sm:flex"} min-w-0 items-center gap-3.5 whitespace-nowrap text-[11px] font-semibold opacity-85 ${isGymHeader ? "ms-8 flex-1 justify-center overflow-x-auto scrollbar-none" : isRestaurantHeader ? "ms-6 flex-1 justify-center overflow-x-auto scrollbar-none" : ""}`}>
               {item.links && item.links.length > 0 ? (
-                item.links.slice(0, isGymHeader ? 7 : 3).map((l, i) => (
-                  isGymHeader ? (
+                item.links.slice(0, isInteractiveHeader ? 7 : 3).map((l, i) => (
+                  isInteractiveHeader ? (
                     <button
                       key={i}
                       type="button"
                       onClick={() => setRotatingLink(i)}
                       onAnimationEnd={() => setRotatingLink(null)}
-                      className={`shrink-0 rounded-sm transition-colors hover:text-[#14e89a] ${rotatingLink === i ? "animate-[spin_0.55s_ease-in-out]" : ""}`}
+                      className={`shrink-0 rounded-sm transition-colors ${isGymHeader ? "hover:text-[#14e89a]" : "hover:text-[#c15d34]"} ${rotatingLink === i ? "animate-[spin_0.55s_ease-in-out]" : ""}`}
                     >
                       {l.label}
                     </button>
@@ -340,9 +354,11 @@ function SectionPreviewCanvas({ section, item, variant, isRtl }) {
               className="px-3 py-2 text-[10px] font-bold shadow-xs"
               style={isGymHeader
                 ? { background: "#14e89a", color: "#07110d" }
-                : { background: item.textColor || "#0f172a", color: item.bgColor || "#ffffff" }}
+                : isRestaurantHeader
+                  ? { background: "#c15d34", color: "#ffffff" }
+                  : { background: item.textColor || "#0f172a", color: item.bgColor || "#ffffff" }}
             >
-              {isGymHeader ? "Get Your Free Pass  →" : isRtl ? "ابدأ" : "Start"}
+              {isGymHeader ? "Get Your Free Pass  →" : isRestaurantHeader ? "Reserve Your Table  →" : isRtl ? "ابدأ" : "Start"}
             </span>
           </div>
         </div>
@@ -351,18 +367,21 @@ function SectionPreviewCanvas({ section, item, variant, isRtl }) {
   }
 
   if (section === "hero") {
+    const isRestaurantHero = item.title === RESTAURANT_PRESETS.hero.match.title;
     const heroImg = item.image
       ? /^(https?:|blob:)/.test(item.image) ? item.image : `${import.meta.env.VITE_API_URL || ""}${item.image}`
-      : "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&auto=format&fit=crop&q=80";
+      : isRestaurantHero
+        ? "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&auto=format&fit=crop&q=80"
+        : "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&auto=format&fit=crop&q=80";
 
     return (
-      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-900 text-white shadow-sm">
-        {variant.type === "split" ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 items-center gap-4 p-6 bg-gradient-to-br from-slate-900 to-slate-800">
+      <div className={`overflow-hidden rounded-2xl border border-slate-200/80 text-white shadow-sm ${isRestaurantHero ? "bg-[#242522]" : "bg-slate-900"}`}>
+        {variant.type === "split" || variant.type === "restaurant" ? (
+          <div className={`grid grid-cols-1 sm:grid-cols-2 items-center gap-4 p-6 ${isRestaurantHero ? "bg-[#242522]" : "bg-gradient-to-br from-slate-900 to-slate-800"}`}>
             <div className="space-y-3">
-              <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/20 px-2.5 py-0.5 text-[10px] font-bold text-blue-400 border border-blue-500/30">
+              <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold border ${isRestaurantHero ? "border-[#c15d34]/40 bg-[#c15d34]/15 text-[#f0a282]" : "border-blue-500/30 bg-blue-500/20 text-blue-400"}`}>
                 <Sparkles className="h-2.5 w-2.5" />
-                {isRtl ? "نسخة احترافية جديدة" : "Next Gen Experience"}
+                {isRestaurantHero ? isRtl ? "طازج يوميًا" : "FRESH EVERY DAY" : isRtl ? "نسخة احترافية جديدة" : "Next Gen Experience"}
               </span>
               <h4 className="text-sm sm:text-base font-extrabold leading-tight text-white line-clamp-2">
                 {item.title || (isRtl ? "ارتقِ بمتجرك إلى المستوى التالي" : "Supercharge Your Modern Online Store")}
@@ -371,7 +390,7 @@ function SectionPreviewCanvas({ section, item, variant, isRtl }) {
                 {item.subtitle || (isRtl ? "منصة متكاملة لتصميم وإدارة متجرك بأعلى كفاءة وسرعة" : "The complete all-in-one storefront solution built for conversion")}
               </p>
               <div className="flex items-center gap-2 pt-1">
-                <span className="rounded-xl bg-blue-600 px-3 py-1.5 text-[11px] font-bold text-white shadow-md">
+                <span className={`rounded-xl px-3 py-1.5 text-[11px] font-bold text-white shadow-md ${isRestaurantHero ? "bg-[#c15d34]" : "bg-blue-600"}`}>
                   {item.ctaText || (isRtl ? "ابدأ الآن مجاناً" : "Get Started Free")}
                 </span>
                 <span className="rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-1.5 text-[11px] font-bold text-slate-300">
@@ -443,8 +462,17 @@ function SectionPreviewCanvas({ section, item, variant, isRtl }) {
   }
 
   if (section === "testimonials") {
+    const isRestaurant = item.heading === RESTAURANT_PRESETS.testimonials.match.heading;
+    const clientName = item.clientName || (isRestaurant ? "Restaurant Guest" : isRtl ? "سارة أحمد" : "Sarah Anderson");
+    const clientRole = item.clientRole || (isRestaurant ? "Guest" : isRtl ? "مشتري موثق" : "Verified Buyer");
+    const feedback = item.feedback || (isRestaurant
+      ? "A relaxed atmosphere, thoughtful service, and a meal worth coming back for."
+      : isRtl
+        ? "أفضل متجر تعاملت معه على الإطلاق، سرعة في التوصيل وجودة فاخرة للمنتجات!"
+        : "Outstanding shopping experience, ultra-fast shipping and supreme product quality!");
+
     return (
-      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-50/50 p-5 shadow-sm">
+      <div className={`overflow-hidden rounded-2xl border border-slate-200/80 p-5 shadow-sm ${isRestaurant ? "bg-[#f6f1e8]" : "bg-slate-50/50"}`}>
         <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-1 text-amber-400">
@@ -454,19 +482,19 @@ function SectionPreviewCanvas({ section, item, variant, isRtl }) {
             </div>
             <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
               <CheckCircle2 className="h-2.5 w-2.5" />
-              {isRtl ? "مشتري موثق" : "Verified Buyer"}
+              {clientRole}
             </span>
           </div>
           <p className="text-xs italic text-slate-700 leading-relaxed">
-            "{isRtl ? "أفضل متجر تعاملت معه على الإطلاق، سرعة في التوصيل وجودة فاخرة للمنتجات!" : "Outstanding shopping experience, ultra-fast shipping and supreme product quality!"}"
+            "{feedback}"
           </p>
           <div className="mt-3 flex items-center gap-2 pt-2 border-t border-slate-100">
-            <div className="h-7 w-7 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 text-white flex items-center justify-center font-bold text-[10px]">
-              SA
+            <div className={`h-7 w-7 rounded-full text-white flex items-center justify-center font-bold text-[10px] ${isRestaurant ? "bg-[#c15d34]" : "bg-gradient-to-tr from-blue-500 to-indigo-500"}`}>
+              {clientName.slice(0, 2).toUpperCase()}
             </div>
             <div>
-              <p className="text-xs font-bold text-slate-900">{isRtl ? "سارة أحمد" : "Sarah Anderson"}</p>
-              <p className="text-[10px] text-slate-400">{isRtl ? "الرياض، المملكة العربية السعودية" : "Verified Customer"}</p>
+              <p className="text-xs font-bold text-slate-900">{clientName}</p>
+              <p className="text-[10px] text-slate-400">{clientRole}</p>
             </div>
           </div>
         </div>
@@ -475,19 +503,21 @@ function SectionPreviewCanvas({ section, item, variant, isRtl }) {
   }
 
   if (section === "contact") {
+    const isRestaurant = item.heading === RESTAURANT_PRESETS.contact.match.heading;
+
     return (
       <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 rounded-xl border border-pink-100 bg-pink-50/50 p-3.5">
+        <div className={`flex flex-col sm:flex-row items-center justify-between gap-3 rounded-xl border p-3.5 ${isRestaurant ? "border-[#c15d34]/20 bg-[#f6f1e8]" : "border-pink-100 bg-pink-50/50"}`}>
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-pink-500 text-white font-bold text-xs">
-              <Mail className="h-4 w-4" />
+            <div className={`flex h-8 w-8 items-center justify-center rounded-lg text-white font-bold text-xs ${isRestaurant ? "bg-[#c15d34]" : "bg-pink-500"}`}>
+              {isRestaurant ? <UtensilsCrossed className="h-4 w-4" /> : <Mail className="h-4 w-4" />}
             </div>
             <div>
               <p className="text-xs font-bold text-slate-900">{item.heading || (isRtl ? "تواصل معنا" : "Contact Us")}</p>
               <p className="text-[10px] text-slate-500">{item.phone || item.email || (isRtl ? "الهاتف والبريد والدعم" : "Phone & Email")}</p>
             </div>
           </div>
-          <span className="rounded-lg bg-pink-600 px-2.5 py-1 text-[10px] font-bold text-white shadow-xs">
+          <span className={`rounded-lg px-2.5 py-1 text-[10px] font-bold text-white shadow-xs ${isRestaurant ? "bg-[#c15d34]" : "bg-pink-600"}`}>
             {item.submitText || (isRtl ? "إرسال" : "Submit")}
           </span>
         </div>
@@ -496,11 +526,12 @@ function SectionPreviewCanvas({ section, item, variant, isRtl }) {
   }
 
   if (section === "footer") {
+    const isRestaurant = item.copyright === RESTAURANT_PRESETS.footer.match.copyright;
     const links = Array.isArray(item.links) ? item.links : [];
     return (
-      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-900 p-4 text-white shadow-sm">
+      <div className={`overflow-hidden rounded-2xl border border-slate-200/80 p-4 text-white shadow-sm ${isRestaurant ? "bg-[#242522]" : "bg-slate-900"}`}>
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-          <span className="font-extrabold tracking-tight">Wegz Store</span>
+          <span className="font-extrabold tracking-tight">{isRestaurant ? "Restaurant" : "Wegz Store"}</span>
           <div className="flex gap-3 text-[10px] text-slate-300">
             {links.length > 0 ? (
               links.slice(0, 3).map((l, i) => <span key={i}>{l.label}</span>)
@@ -515,19 +546,22 @@ function SectionPreviewCanvas({ section, item, variant, isRtl }) {
   }
 
   if (section === "info" || section === "info2") {
+    const isRestaurant = item.heading === RESTAURANT_PRESETS.info.match.heading || item.heading === RESTAURANT_PRESETS.info2.match.heading;
     return (
       <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-emerald-100 bg-emerald-50/40 p-3.5">
+        <div className={`flex items-center justify-between gap-3 rounded-xl border p-3.5 ${isRestaurant ? "border-[#c15d34]/20 bg-[#f6f1e8]" : "border-emerald-100 bg-emerald-50/40"}`}>
           <div className="space-y-1">
-            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-bold text-emerald-700">
-              {section === "info" ? "INFO 1" : "INFO 2"}
+            <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${isRestaurant ? "bg-[#c15d34]/10 text-[#9b4729]" : "bg-emerald-100 text-emerald-700"}`}>
+              {isRestaurant ? section === "info" ? "OUR STORY" : "FOOD MENU" : section === "info" ? "INFO 1" : "INFO 2"}
             </span>
             <h4 className="text-xs font-bold text-slate-900">{item.heading || item.title || (isRtl ? "معلومات عنا" : "About Us")}</h4>
-            <p className="text-[10px] text-slate-500 line-clamp-1">{item.subheading || (isRtl ? "وصف ومحتوى تعريفي" : "Story & details")}</p>
+            <p className="text-[10px] text-slate-500 line-clamp-1">{item.subheading || item.paragraph || (isRtl ? "وصف ومحتوى تعريفي" : "Story & details")}</p>
           </div>
-          <span className="rounded-lg bg-emerald-600 px-2.5 py-1 text-[10px] font-bold text-white shadow-xs shrink-0">
-            {item.ctaText || (isRtl ? "المزيد" : "More")}
-          </span>
+          {!isRestaurant && (
+            <span className="shrink-0 rounded-lg bg-emerald-600 px-2.5 py-1 text-[10px] font-bold text-white shadow-xs">
+              {item.ctaText || (isRtl ? "المزيد" : "More")}
+            </span>
+          )}
         </div>
       </div>
     );
@@ -685,6 +719,9 @@ export default function SectionSelect() {
                 const gymPreset = GYM_PRESETS[section];
                 const isGymPreset = gymPreset && Object.entries(gymPreset.match)
                   .every(([field, value]) => item[field] === value);
+                const restaurantPreset = RESTAURANT_PRESETS[section];
+                const isRestaurantPreset = restaurantPreset && Object.entries(restaurantPreset.match)
+                  .every(([field, value]) => item[field] === value);
                 const variant = isGymPreset
                   ? {
                       titleEn: `GYM ${cfg.title.en}`,
@@ -696,6 +733,19 @@ export default function SectionSelect() {
                       features: ["GYM", "Gym Theme"],
                       type: "gym",
                     }
+                  : isRestaurantPreset
+                    ? {
+                        titleEn: RESTAURANT_SECTION_LABELS[section].en,
+                        titleAr: RESTAURANT_SECTION_LABELS[section].ar,
+                        descEn: "Restaurant section preset using the existing section fields.",
+                        descAr: "نسخة مطعم مبنية على الحقول المدعومة للقسم.",
+                        badge: "Restaurant",
+                        badgeColor: "bg-orange-50 text-orange-800 border-orange-200",
+                        features: section === "info2"
+                          ? ["Starters", "Salads", "Soups", "Main Dishes"]
+                          : ["Restaurant", "Theme Preset"],
+                        type: "restaurant",
+                      }
                   : templates[idx % templates.length] || templates[0];
 
                 return (
