@@ -26,7 +26,7 @@ export const SECTION_MAP = {
   header: {
     key: "header",
     title: { ar: "الهيدر (الرأس)", en: "Header" },
-    desc: { ar: "تحكم في الشعار وروابط القائمة العلوية", en: "Manage logo and navigation links" },
+    desc: { ar: "تحكمي في شعار الجيم وروابط القائمة وزر الاشتراك", en: "Manage the gym logo, navigation and membership button" },
     icon: Layout,
     color: "#3b82f6",
     fields: [
@@ -41,7 +41,7 @@ export const SECTION_MAP = {
   hero: {
     key: "hero",
     title: { ar: "القسم الرئيسي (الهيرو)", en: "Hero Section" },
-    desc: { ar: "تحكم في الواجهة الرئيسية والعنوان الرئيسي وزر الإجراء", en: "Manage main banner, heading and CTA" },
+    desc: { ar: "عدّلي واجهة الجيم الرئيسية والعنوان وصورة التدريب", en: "Edit the gym's main banner, heading and training image" },
     icon: Home,
     color: "#8b5cf6",
     fields: [
@@ -55,8 +55,8 @@ export const SECTION_MAP = {
   },
   info: {
     key: "info",
-    title: { ar: "معلومات عنا (1)", en: "Information 1" },
-    desc: { ar: "قسم المعلومات والتعريف الأول بالموقع والخدمات", en: "First info and description section" },
+    title: { ar: "عن الجيم", en: "About the Gym" },
+    desc: { ar: "قدمي الجيم ومميزاته وخدماته", en: "Introduce the gym, its benefits and services" },
     icon: Info,
     color: "#10b981",
     fields: [
@@ -72,8 +72,8 @@ export const SECTION_MAP = {
   },
   info2: {
     key: "info2",
-    title: { ar: "معلومات عنا (2)", en: "Information 2" },
-    desc: { ar: "قسم المعلومات والتعريف الثاني بالمميزات الإضافية", en: "Second info and description section" },
+    title: { ar: "البرامج والتدريب", en: "Programs & Training" },
+    desc: { ar: "اعرضي أنواع التدريب والبرامج المتاحة", en: "Show the available training styles and programs" },
     icon: Sparkles,
     color: "#06b6d4",
     fields: [
@@ -90,7 +90,7 @@ export const SECTION_MAP = {
   testimonials: {
     key: "testimonials",
     title: { ar: "آراء العملاء", en: "Testimonials" },
-    desc: { ar: "عرض تقييمات وآراء العملاء والزوار", en: "Showcase customer reviews and feedback" },
+    desc: { ar: "اعرضي تجارب وآراء أعضاء الجيم", en: "Show gym members' stories and reviews" },
     icon: MessageSquare,
     color: "#f59e0b",
     fields: [
@@ -107,17 +107,17 @@ export const SECTION_MAP = {
   },
   contact: {
     key: "contact",
-    title: { ar: "تواصل معنا", en: "Contact Us" },
-    desc: { ar: "معلومات التواصل، العنوان، وأرقام الهواتف", en: "Contact details, address and phones" },
+    title: { ar: "انضمي إلى النادي", en: "Join the Club" },
+    desc: { ar: "بيانات الجيم ومعلومات التواصل والانضمام", en: "Gym details, contact information and membership inquiries" },
     icon: PhoneCall,
     color: "#ec4899",
     fields: [
-      { name: "heading", type: "text", label: { ar: "العنوان الرئيسي", en: "Main Heading" } },
-      { name: "subheading", type: "textarea", label: { ar: "العنوان الفرعي / رسالة الترحيب", en: "Subheading / Welcome Text" } },
+      { name: "heading", type: "text", label: { ar: "عنوان الدعوة للانضمام", en: "Membership Heading" } },
+      { name: "subheading", type: "textarea", label: { ar: "رسالة الترحيب", en: "Welcome Message" } },
       { name: "phone", type: "text", label: { ar: "رقم الهاتف / الواتساب", en: "Phone Number" } },
       { name: "email", type: "text", label: { ar: "البريد الإلكتروني", en: "Email Address" } },
       { name: "address", type: "text", label: { ar: "العنوان أو المدينة", en: "Address" } },
-      { name: "submitText", type: "text", label: { ar: "نص زر الإرسال", en: "Submit Button Text" } },
+      { name: "submitText", type: "text", label: { ar: "نص زر الحجز", en: "Booking Button Text" } },
       { name: "bgColor", type: "color", label: { ar: "لون الخلفية", en: "Background Color" } },
       { name: "textColor", type: "color", label: { ar: "لون النص", en: "Text Color" } },
       { name: "isVisible", type: "toggle", label: { ar: "تفعيل القسم", en: "Is Active" } }
@@ -126,7 +126,7 @@ export const SECTION_MAP = {
   footer: {
     key: "footer",
     title: { ar: "الفوتر (تذييل الصفحة)", en: "Footer" },
-    desc: { ar: "روابط الحقوق والنهاية في الموقع", en: "Manage footer links and copyrights" },
+    desc: { ar: "عدّلي روابط الجيم وبيانات الحقوق في نهاية الصفحة", en: "Manage gym links and copyright details" },
     icon: Footprints,
     color: "#64748b",
     fields: [
@@ -149,7 +149,7 @@ export const GROUPS = [
     ]
   },
   {
-    title: { ar: "الصفحة الرئيسية والمحتوى", en: "Home & Content" },
+    title: { ar: "الرئيسية ومحتوى الجيم", en: "Home & Gym Content" },
     items: [
       SECTION_MAP.hero,
       SECTION_MAP.info,
@@ -165,3 +165,14 @@ export const GROUPS = [
     ]
   }
 ];
+
+export const GYM_PRESETS = {
+  announcement: { match: { text: "MOVE. BREATH. WORKOUT. LIVE. LOVE. REPEAT." } },
+  header: { match: { brandName: "GYM" } },
+  hero: { match: { title: "Results Driven Fitness Trainings." } },
+  info: { match: { heading: "Feel good, look gorgeous." } },
+  info2: { match: { heading: "Unlimited Training" } },
+  testimonials: { match: { heading: "Enjoyed The Experience" } },
+  contact: { match: { heading: "Join The Club" } },
+  footer: { match: { copyright: "Copyright 2026 XTRA GYM. All Rights Reserved." } },
+};

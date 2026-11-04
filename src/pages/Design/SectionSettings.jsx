@@ -22,11 +22,12 @@ import {
   MapPin,
   CheckCircle2,
   Quote,
+  Dumbbell,
 } from "lucide-react";
 import { useGet } from "../../hooks/useGet";
 import { useMutation } from "../../hooks/useMutation";
 import { toast } from "sonner";
-import { SECTION_MAP } from "./sectionsConfig";
+import { SECTION_MAP, GYM_PRESETS } from "./sectionsConfig";
 
 // ─── Shared Styles ─────────────────────────────────────────────────────────────
 const inputCls =
@@ -95,7 +96,7 @@ function ImageField({ value, file, onFile, lang }) {
 }
 
 const CURATED_PALETTE = [
-  "#ffffff", "#000000", "#3b82f6", "#2563eb",
+  "#ffffff", "#000000", "#c8f169", "#3b82f6",
   "#8b5cf6", "#10b981", "#ef4444", "#f59e0b",
   "#06b6d4", "#ec4899", "#1e293b", "#f8fafc",
 ];
@@ -287,6 +288,7 @@ function BrowserChrome() {
 }
 
 function HeaderPreview({ form, files, isRtl }) {
+  const [rotatingLink, setRotatingLink] = useState(null);
   const logoPreview = useMemo(() => {
     if (files?.logo) return URL.createObjectURL(files.logo);
     if (!form?.logo) return null;
@@ -295,9 +297,10 @@ function HeaderPreview({ form, files, isRtl }) {
       : `${import.meta.env.VITE_API_URL || ""}${form.logo}`;
   }, [files?.logo, form?.logo]);
 
-  const bgColor = form?.bgColor || "#ffffff";
-  const textColor = form?.textColor || "#0f172a";
-  const brandName = form?.brandName || (isRtl ? "براند" : "Brand");
+  const bgColor = form?.bgColor || "#111312";
+  const textColor = form?.textColor || "#f5f6f2";
+  const isGymHeader = form?.brandName === GYM_PRESETS.header.match.brandName;
+  const brandName = form?.brandName || "GYM";
   const links = (form?.links || []).filter((l) => l.isActive !== false);
 
   return (
@@ -307,15 +310,21 @@ function HeaderPreview({ form, files, isRtl }) {
         className="flex items-center justify-between px-5 py-3.5 transition-all duration-300"
         style={{ backgroundColor: bgColor, color: textColor }}
       >
-        <div className="flex items-center gap-2">
+        <div className="group flex items-center gap-2">
           {logoPreview ? (
-            <img src={logoPreview} alt="" className="h-8 w-8 rounded-lg object-contain" />
+            <img
+              src={logoPreview}
+              alt=""
+              className={`h-8 w-8 rounded-lg object-contain ${isGymHeader ? "transition-transform duration-700 group-hover:rotate-[360deg]" : ""}`}
+            />
           ) : (
             <div
               className="flex h-8 w-8 items-center justify-center rounded-lg text-xs font-black"
               style={{ backgroundColor: textColor + "18", color: textColor }}
             >
-              {brandName[0]?.toUpperCase() || "B"}
+              {isGymHeader
+                ? <Dumbbell className="h-5 w-5 transition-transform duration-700 group-hover:rotate-[360deg]" />
+                : brandName[0]?.toUpperCase() || "B"}
             </div>
           )}
           <span className="text-sm font-extrabold tracking-tight transition-all duration-200">
@@ -323,27 +332,39 @@ function HeaderPreview({ form, files, isRtl }) {
           </span>
         </div>
 
-        <div className="hidden sm:flex items-center gap-4 text-[11px] font-semibold opacity-85">
+        <div className={`hidden min-w-0 items-center gap-4 text-[11px] font-semibold opacity-85 sm:flex ${isGymHeader ? "ms-8 max-w-[48%] overflow-x-auto whitespace-nowrap scrollbar-none" : ""}`}>
           {links.length > 0 ? (
-            links.slice(0, 4).map((l, i) => (
-              <span key={i} className="transition-all duration-200">
-                {l.label || `Link ${i + 1}`}
-              </span>
-            ))
+            links.slice(0, isGymHeader ? 7 : 4).map((l, i) =>
+              isGymHeader ? (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setRotatingLink(i)}
+                  onAnimationEnd={() => setRotatingLink(null)}
+                  className={`shrink-0 transition-colors hover:text-[#c8f169] ${rotatingLink === i ? "animate-[spin_0.55s_ease-in-out]" : ""}`}
+                >
+                  {l.label || `Link ${i + 1}`}
+                </button>
+              ) : (
+                <span key={i} className="transition-all duration-200">
+                  {l.label || `Link ${i + 1}`}
+                </span>
+              )
+            )
           ) : (
             <>
               <span>{isRtl ? "الرئيسية" : "Home"}</span>
-              <span>{isRtl ? "المتجر" : "Store"}</span>
-              <span>{isRtl ? "عنا" : "About"}</span>
+              <span>{isRtl ? "الحصص" : "Classes"}</span>
+              <span>{isRtl ? "المدربون" : "Coaches"}</span>
             </>
           )}
         </div>
 
         <span
           className="rounded-lg px-3 py-1 text-[11px] font-bold shadow-sm transition-all duration-200"
-          style={{ backgroundColor: textColor, color: bgColor }}
+          style={{ backgroundColor: "#c8f169", color: "#111312" }}
         >
-          {isRtl ? "ابدأ" : "Get Started"}
+          {isRtl ? "احصل على تذكرتك" : "Get Your Free Pass"}
         </span>
       </div>
 
@@ -366,8 +387,8 @@ function AnnouncementPreview({ form, isRtl }) {
   const text =
     form?.text ||
     (isRtl
-      ? "عروض حصرية لفترة محدودة لجميع العملاء!"
-      : "Limited Time Offer! 20% off all new collections");
+      ? "ابدئي رحلتك الرياضية اليوم مع إكسترا جيم"
+      : "Start your fitness journey today at XTRA GYM");
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-md">
@@ -384,7 +405,7 @@ function AnnouncementPreview({ form, isRtl }) {
           className="rounded px-2.5 py-0.5 text-[10px] font-bold shrink-0"
           style={{ backgroundColor: textColor + "28", color: textColor }}
         >
-          {isRtl ? "تسوق الآن" : "Shop Now"}
+          {isRtl ? "انضمي الآن" : "Join Now"}
         </span>
       </div>
 
@@ -419,7 +440,7 @@ function HeroPreview({ form, files, isRtl }) {
   }, [files?.image, form?.image]);
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-900 shadow-md">
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 shadow-md">
       <div className="flex items-center gap-1.5 border-b border-slate-800 bg-slate-800/80 px-3 py-2">
         <span className="h-2.5 w-2.5 rounded-full bg-rose-500/80" />
         <span className="h-2.5 w-2.5 rounded-full bg-amber-500/80" />
@@ -429,21 +450,21 @@ function HeroPreview({ form, files, isRtl }) {
         </span>
       </div>
 
-      <div className="grid grid-cols-2 items-center gap-4 p-6 bg-gradient-to-br from-slate-900 to-slate-800">
+      <div className="grid grid-cols-2 items-center gap-4 p-6 bg-[#111312]">
         <div className="space-y-3">
-          <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/20 px-2.5 py-0.5 text-[10px] font-bold text-blue-300 border border-blue-500/30">
+          <span className="inline-flex items-center gap-1 rounded-full bg-[#c8f169]/15 px-2.5 py-0.5 text-[10px] font-bold text-[#c8f169] border border-[#c8f169]/30">
             <Sparkles className="h-2.5 w-2.5" />
-            {isRtl ? "جديد" : "New Release"}
+            {isRtl ? "نتائج حقيقية" : "RESULTS DRIVEN"}
           </span>
           <h4 className="text-sm font-extrabold leading-tight text-white transition-all duration-200">
-            {form?.title || (isRtl ? "عنوان الصفحة الرئيسية" : "Your Hero Title Here")}
+            {form?.title || (isRtl ? "تدريب لياقة يحقق أهدافك" : "FITNESS TRAINING THAT GETS RESULTS")}
           </h4>
           <p className="text-xs text-slate-300 line-clamp-2 transition-all duration-200">
-            {form?.subtitle || (isRtl ? "وصف مختصر لمتجرك أو خدمتك" : "A short subtitle describing your store")}
+            {form?.subtitle || (isRtl ? "تدريب شخصي وحصص جماعية ومدربون خبراء لمساعدتك على تحقيق أهدافك." : "Personal training, group classes and expert coaches to help you reach your goals.")}
           </p>
           <div className="flex items-center gap-2 pt-1">
-            <span className="rounded-xl bg-blue-600 px-3 py-1.5 text-[11px] font-bold text-white shadow-md transition-all duration-200">
-              {form?.ctaText || (isRtl ? "ابدأ الآن" : "Get Started")}
+            <span className="rounded-xl bg-[#c8f169] px-3 py-1.5 text-[11px] font-bold text-slate-950 shadow-md transition-all duration-200">
+              {form?.ctaText || (isRtl ? "احصل على تذكرتك المجانية" : "Get Your Free Pass")}
             </span>
             <span className="flex items-center gap-1 rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-1.5 text-[11px] font-bold text-slate-300">
               <Play className="h-3 w-3 fill-slate-300" />
@@ -528,17 +549,17 @@ function InfoPreview({ form, files, isRtl, isSecondary }) {
     form?.title ||
     (isRtl
       ? isSecondary
-        ? "مميزاتنا وخدماتنا المتقدمة"
-        : "عن متجرنا ورؤيتنا"
+        ? "تدريبات تناسب أسلوب حياتك"
+        : "اشعري بالقوة، وحققي أهدافك"
       : isSecondary
-      ? "Premium Features & Quality"
-      : "About Our Story & Mission");
+      ? "TRAINING FOR EVERY BODY"
+      : "FEEL STRONGER. REACH FURTHER.");
   const subheading =
     form?.subheading ||
     form?.description ||
     (isRtl
-      ? "نقدم تجربة تسوق مبتكرة وسلسة تجمع بين أعلى درجات الجودة وأفضل الأسعار لجميع عملائنا."
-      : "We provide an exceptional shopping experience combining top-tier quality and competitive value.");
+      ? "في إكسترا جيم، هتلاقي مدربين خبراء وحصص متنوعة ومساحة تشجعك توصلي لأهدافك."
+      : "Expert coaches, energizing classes and a welcoming space to help you reach your fitness goals.");
   const ctaText = form?.ctaText || (isRtl ? "اكتشف المزيد" : "Learn More");
 
   return (
@@ -618,21 +639,21 @@ function TestimonialsPreview({ form, isRtl }) {
   const heading =
     form?.heading ||
     form?.title ||
-    (isRtl ? "آراء وتقييمات العملاء" : "Customer Testimonials");
+    (isRtl ? "حكايات أبطالنا" : "MEMBER STORIES");
   const subheading =
     form?.subheading ||
     form?.subtitle ||
     (isRtl
-      ? "تجارب حقيقية لعملاء وثقوا بمنتجاتنا وخدماتنا"
-      : "Real reviews and ratings from our verified customers");
-  const clientName = form?.clientName || (isRtl ? "سارة أحمد" : "Sarah Jenkins");
+        ? "تجارب حقيقية من أعضاء إكسترا جيم"
+        : "Real stories from the XTRA GYM community");
+      const clientName = form?.clientName || (isRtl ? "جيدن سميث" : "Jaden Smith");
   const clientRole =
-    form?.clientRole || (isRtl ? "عميل موثق" : "Verified Customer");
+    form?.clientRole || (isRtl ? "عضو في إكسترا جيم" : "XTRA GYM Member");
   const feedback =
     form?.feedback ||
     (isRtl
-      ? "أفضل متجر تعاملت معه على الإطلاق! جودة المنتجات ممتازة، والتوصيل سريع جداً والدعم متعاون للغاية."
-      : "Outstanding experience! The product quality exceeded expectations and fast shipping.");
+      ? "من أغسطس وأنا بتدرب مع مدرب في إكسترا جيم، والتجربة فرقت معايا جدًا. جسمي بقى في أحسن حالة."
+      : "I've been training at XTRA GYM since August. The coaching has made a real difference, and I'm in the best shape of my life.");
   const ratingNum = Math.max(1, Math.min(5, parseInt(form?.rating, 10) || 5));
 
   return (
@@ -691,16 +712,16 @@ function TestimonialsPreview({ form, isRtl }) {
 function ContactPreview({ form, isRtl }) {
   const bgColor = form?.bgColor || "#ffffff";
   const textColor = form?.textColor || "#0f172a";
-  const heading = form?.heading || (isRtl ? "تواصل معنا" : "Get In Touch");
+  const heading = form?.heading || (isRtl ? "انضمي إلى النادي" : "JOIN THE CLUB");
   const subheading =
     form?.subheading ||
     (isRtl
-      ? "نسعد بالإجابة على جميع استفساراتكم واقتراحاتكم في أي وقت."
-      : "Have questions? We are here to help you anytime.");
+      ? "ابدئي رحلتك الرياضية واحجزي تقييمك المجاني مع فريقنا."
+      : "Start your fitness journey and book a free assessment with our team.");
   const phone = form?.phone || "+20 123 456 7890";
-  const email = form?.email || "support@wegz.org";
+  const email = form?.email || "hello@xtragym.com";
   const address = form?.address || (isRtl ? "القاهرة، مصر" : "Cairo, Egypt");
-  const submitText = form?.submitText || (isRtl ? "إرسال الرسالة" : "Send Message");
+  const submitText = form?.submitText || (isRtl ? "احجزي تقييمك" : "Book Your Assessment");
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-md">
@@ -782,13 +803,13 @@ function FooterPreview({ form, isRtl }) {
   const copyright =
     form?.copyright ||
     (isRtl
-      ? `© ${new Date().getFullYear()} متجرك. جميع الحقوق محفوظة.`
-      : `© ${new Date().getFullYear()} Your Store. All rights reserved.`);
+      ? `© ${new Date().getFullYear()} إكسترا جيم. جميع الحقوق محفوظة.`
+      : `© ${new Date().getFullYear()} XTRA GYM. All rights reserved.`);
   const text =
     form?.text ||
     (isRtl
-      ? "المتجر العصري الأول لتسوق أفضل المنتجات بأعلى معايير الجودة."
-      : "The premier modern storefront for high quality curated products.");
+      ? "مساحتك للتدريب، الحركة، وتحقيق أهدافك."
+      : "Your space to train, move and reach your goals.");
   const links = (form?.links || []).filter((l) => l.isActive !== false);
 
   return (
@@ -811,9 +832,9 @@ function FooterPreview({ form, isRtl }) {
                   className="flex h-6 w-6 items-center justify-center rounded-lg text-[10px] font-black"
                   style={{ backgroundColor: textColor + "20", color: textColor }}
                 >
-                  W
+                  X
                 </div>
-                <span className="text-xs font-black tracking-tight">Wegz Store</span>
+                <span className="text-xs font-black tracking-tight">XTRA GYM</span>
               </div>
               <p className="text-[11px] opacity-75 leading-relaxed line-clamp-2">
                 {text}
@@ -833,9 +854,9 @@ function FooterPreview({ form, isRtl }) {
               ) : (
                 <>
                   <span>{isRtl ? "الرئيسية" : "Home"}</span>
-                  <span>{isRtl ? "المنتجات" : "Products"}</span>
-                  <span>{isRtl ? "سياسة الخصوصية" : "Privacy"}</span>
-                  <span>{isRtl ? "الشروط والأحكام" : "Terms"}</span>
+                  <span>{isRtl ? "الحصص" : "Classes"}</span>
+                  <span>{isRtl ? "المدربون" : "Coaches"}</span>
+                  <span>{isRtl ? "تواصل معنا" : "Contact"}</span>
                 </>
               )}
             </div>

@@ -24,11 +24,12 @@ import {
   Phone,
   MapPin,
   CheckCircle2,
-  Play
+  Play,
+  Dumbbell
 } from "lucide-react";
 import { useGet } from "../../hooks/useGet";
 import { useMutation } from "../../hooks/useMutation";
-import { SECTION_MAP } from "./sectionsConfig";
+import { SECTION_MAP, GYM_PRESETS } from "./sectionsConfig";
 import { toast } from "sonner";
 
 // Distinct visual presets and configurations for EVERY section
@@ -225,11 +226,24 @@ const SECTION_TEMPLATES = {
 
 // Sub-component to render interactive preview of different section types
 function SectionPreviewCanvas({ section, item, variant, isRtl }) {
+  const [rotatingLink, setRotatingLink] = useState(null);
+
   if (section === "header") {
+    const isGymHeader = item.brandName === GYM_PRESETS.header.match.brandName;
+
     return (
       <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+        {isGymHeader && (
+          <div className="flex items-center justify-end gap-4 bg-[#07090b] px-5 py-2 text-[10px] text-white">
+            <span className="italic text-slate-300">Follow Us On</span>
+            <span className="h-px w-8 bg-slate-700" />
+            <span aria-label="Facebook">f</span>
+            <span aria-label="YouTube">YouTube</span>
+            <span aria-label="Instagram">Instagram</span>
+          </div>
+        )}
         {/* Browser Top Bar */}
-        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-100/70 px-3.5 py-2">
+        {!isGymHeader && <div className="flex items-center justify-between border-b border-slate-100 bg-slate-100/70 px-3.5 py-2">
           <div className="flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-rose-400" />
             <span className="h-2 w-2 rounded-full bg-amber-400" />
@@ -237,7 +251,7 @@ function SectionPreviewCanvas({ section, item, variant, isRtl }) {
             <span className="ms-2 text-[9px] font-mono text-slate-400">wegostores.com/nav</span>
           </div>
           <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{variant.badge}</span>
-        </div>
+        </div>}
 
         {/* Top Banner if variant has it */}
         {(variant.type === "announcement" || variant.type === "ecommerce") && (
@@ -249,23 +263,23 @@ function SectionPreviewCanvas({ section, item, variant, isRtl }) {
 
         {/* Header Bar */}
         <div
-          className="flex items-center justify-between px-4 py-3.5 transition-all"
+          className={`relative flex items-center justify-between px-4 py-3.5 transition-all ${isGymHeader ? "min-h-16 ps-40" : ""}`}
           style={{ backgroundColor: item.bgColor || "#ffffff", color: item.textColor || "#0f172a" }}
         >
           {/* Logo & Brand */}
-          <div className="flex items-center gap-2">
+          <div className={`flex items-center gap-2 ${isGymHeader ? "group absolute start-5 -top-8 z-10 h-24 w-36 flex-col justify-center bg-white text-slate-950 shadow-sm" : ""}`}>
             {item.logo ? (
               <img
                 src={/^(https?:|blob:)/.test(item.logo) ? item.logo : `${import.meta.env.VITE_API_URL || ""}${item.logo}`}
                 alt=""
-                className="h-7 w-7 rounded-lg object-contain"
+                className={isGymHeader ? "h-11 w-11 object-contain transition-transform duration-700 group-hover:rotate-[360deg]" : "h-7 w-7 rounded-lg object-contain"}
               />
             ) : (
               <div
-                className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500/10 text-xs font-black"
-                style={{ color: item.textColor || "#3b82f6" }}
+                className={`flex items-center justify-center text-xs font-black ${isGymHeader ? "h-11 w-11 text-slate-950" : "h-8 w-8 rounded-lg bg-blue-500/10"}`}
+                style={!isGymHeader ? { color: item.textColor || "#3b82f6" } : undefined}
               >
-                {(item.brandName || "W")[0].toUpperCase()}
+                {isGymHeader ? <Dumbbell className="h-9 w-9 transition-transform duration-700 group-hover:rotate-[360deg]" /> : (item.brandName || "W")[0].toUpperCase()}
               </div>
             )}
             <span className="text-sm font-extrabold tracking-tight">{item.brandName || "Brand"}</span>
@@ -278,9 +292,23 @@ function SectionPreviewCanvas({ section, item, variant, isRtl }) {
               <span className="text-[11px] font-medium">{isRtl ? "ابحث عن المنتجات..." : "Search items..."}</span>
             </div>
           ) : (
-            <div className="hidden sm:flex items-center gap-3.5 text-[11px] font-semibold opacity-85">
+            <div className={`hidden min-w-0 items-center gap-3.5 whitespace-nowrap text-[11px] font-semibold opacity-85 sm:flex ${isGymHeader ? "ms-8 flex-1 justify-center overflow-x-auto scrollbar-none" : ""}`}>
               {item.links && item.links.length > 0 ? (
-                item.links.slice(0, 3).map((l, i) => <span key={i}>{l.label}</span>)
+                item.links.slice(0, isGymHeader ? 7 : 3).map((l, i) => (
+                  isGymHeader ? (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setRotatingLink(i)}
+                      onAnimationEnd={() => setRotatingLink(null)}
+                      className={`shrink-0 rounded-sm transition-colors hover:text-[#14e89a] ${rotatingLink === i ? "animate-[spin_0.55s_ease-in-out]" : ""}`}
+                    >
+                      {l.label}
+                    </button>
+                  ) : (
+                    <span key={i}>{l.label}</span>
+                  )
+                ))
               ) : (
                 <><span>Home</span><span>Store</span><span>About</span></>
               )}
@@ -309,10 +337,12 @@ function SectionPreviewCanvas({ section, item, variant, isRtl }) {
             )}
 
             <span
-              className="rounded-lg px-2.5 py-1 text-[10px] font-bold shadow-xs"
-              style={{ background: item.textColor || "#0f172a", color: item.bgColor || "#ffffff" }}
+              className="px-3 py-2 text-[10px] font-bold shadow-xs"
+              style={isGymHeader
+                ? { background: "#14e89a", color: "#07110d" }
+                : { background: item.textColor || "#0f172a", color: item.bgColor || "#ffffff" }}
             >
-              {isRtl ? "ابدأ" : "Start"}
+              {isGymHeader ? "Get Your Free Pass  →" : isRtl ? "ابدأ" : "Start"}
             </span>
           </div>
         </div>
@@ -652,7 +682,21 @@ export default function SectionSelect() {
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
               {records.map((item, idx) => {
                 const isActive = item.isVisible;
-                const variant = templates[idx % templates.length] || templates[0];
+                const gymPreset = GYM_PRESETS[section];
+                const isGymPreset = gymPreset && Object.entries(gymPreset.match)
+                  .every(([field, value]) => item[field] === value);
+                const variant = isGymPreset
+                  ? {
+                      titleEn: `GYM ${cfg.title.en}`,
+                      titleAr: `GYM - ${cfg.title.ar}`,
+                      descEn: "Gym section preset based on the reference theme.",
+                      descAr: "نسخة الجيم للقسم حسب التصميم المرجعي.",
+                      badge: "GYM",
+                      badgeColor: "bg-lime-50 text-lime-700 border-lime-200",
+                      features: ["GYM", "Gym Theme"],
+                      type: "gym",
+                    }
+                  : templates[idx % templates.length] || templates[0];
 
                 return (
                   <div

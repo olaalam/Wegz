@@ -94,7 +94,7 @@ export default function DesignStudio() {
   const [active, setActive] = useState(null);
 
   const { data, loading, error, refetch } = useGet("/api/admin/dashboard/sections");
-  const sections = data?.sections || {};
+  const sections = data?.sections || data?.data?.sections || data?.data || {};
 
   const stats = useMemo(() => {
     const all = Object.values(sections).flat();
