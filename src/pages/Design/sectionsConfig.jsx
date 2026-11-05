@@ -1,13 +1,207 @@
-import { 
-  Home, 
-  Info, 
-  Sparkles, 
-  PhoneCall, 
-  Megaphone, 
-  Layout, 
-  MessageSquare, 
-  Footprints 
+import {
+  Home,
+  Info,
+  Sparkles,
+  PhoneCall,
+  Megaphone,
+  Layout,
+  MessageSquare,
+  Footprints,
 } from "lucide-react";
+
+export const DESIGNS = {
+  business: {
+    key: "business",
+    name: { ar: "بيزنس", en: "Business" },
+    desc: { ar: "هيدر كبسولة بيضا وزرار أخضر متدرّج", en: "White pill header with a green gradient CTA" },
+    radius: "rounded-3xl", serif: true,
+    bg: "#ffffff", text: "#0f172a", alt: "#effaf6", altText: "#0f172a",
+    accent: "#34b78f", accentText: "#ffffff",
+    headerBg: "#ffffff", headerText: "#0f172a", footerBg: "#0f172a",
+    headerCta: { ar: "استشارة مجانية", en: "Free Consultation" },
+  },
+  corporate: {
+    key: "corporate",
+    name: { ar: "كوربوريت", en: "Corporate" },
+    desc: { ar: "أزرق غامق مع شريط علوي وعنوان في النص", en: "Deep blue with top bar and centered hero" },
+    radius: "rounded-none", serif: false,
+    bg: "#0b2a6b", text: "#ffffff", alt: "#ffffff", altText: "#0f172a",
+    accent: "#4f8df7", accentText: "#ffffff",
+    headerBg: "#0b2a6b", headerText: "#ffffff", footerBg: "#071c4a",
+    headerCta: null,
+  },
+  "corporate-red": {
+    key: "corporate-red",
+    name: { ar: "كوربوريت أحمر", en: "Corporate Red" },
+    desc: { ar: "كحلي مع بلوكات تنقل وزرار أحمر ملاصق", en: "Navy with block navigation and a red CTA block" },
+    radius: "rounded-md", serif: false,
+    bg: "#1b2470", text: "#ffffff", alt: "#f4f5fa", altText: "#1b2470",
+    accent: "#d9082b", accentText: "#ffffff",
+    headerBg: "#1b2470", headerText: "#ffffff", footerBg: "#121a55",
+    headerCta: { ar: "اطلبي عرض سعر", en: "Get A Free Quote" },
+  },
+  construction: {
+    key: "construction",
+    name: { ar: "إنشاءات", en: "Construction" },
+    desc: { ar: "كحلي وأصفر مع صندوق عنوان بارز وسلايدر مدمج", en: "Navy and yellow with bold title and interactive slider" },
+    radius: "rounded-none", serif: true,
+    bg: "#1f2d45", text: "#ffffff", alt: "#ffffff", altText: "#1f2d45",
+    accent: "#f2b933", accentText: "#1f2d45",
+    headerBg: "#1f2d45", headerText: "#ffffff", footerBg: "#17233a",
+    headerCta: { ar: "استشارة مجانية", en: "Free Consultation" },
+  },
+};
+
+export const DESIGN_KEYS = Object.keys(DESIGNS);
+
+export const DESIGN_CONTENT = {
+  business: {
+    brand: "XTRA Business",
+    links: ["Home", "About", "Services", "Blog", "Contact"],
+    announcement: "Limited time offer — book your free consultation today",
+    eyebrow: "We are expert team",
+    heroTitle: "We create products that make people's lives easier & better.",
+    heroSubtitle: "A team of designers and engineers building products people love.",
+    heroCta: "How it works?",
+    infoHeading: "Built around your business",
+    infoSubheading: "We combine strategy, design and technology to help teams ship faster and grow with confidence.",
+    info2Heading: "Everything you need to grow",
+    info2Paragraph: "From the first idea to the final launch, we stay with you at every step of the journey.",
+    testiHeading: "Loved by our clients",
+    testiSubheading: "Real stories from teams we have worked with.",
+    contactHeading: "Let's talk about your project",
+    contactSubheading: "Tell us what you need and we will get back to you within one business day.",
+    contactCta: "Free Consultation",
+    footerDescription: "Products that make life easier & better.",
+  },
+  corporate: {
+    brand: "XTRA Corporation",
+    links: ["Home", "About", "Services", "FAQ's", "Blog", "Portfolio", "Contact"],
+    announcement: "Have questions? Call now +1 (818) 23 45 678",
+    eyebrow: "Our services",
+    heroTitle: "We Plan, We Execute, You Celebrate",
+    heroSubtitle: "We Are Advertising Technology Experts That Drive Business Results.",
+    heroCta: "Start Your New Project",
+    infoHeading: "What we can do?",
+    infoSubheading: "Financial functions, materials distribution and purchasing services handled end to end by one team.",
+    info2Heading: "Accounting & purchasing services",
+    info2Paragraph: "Streamlined processes and clear reporting so you can focus on what matters most.",
+    testiHeading: "What our clients say",
+    testiSubheading: "Trusted by companies across industries.",
+    contactHeading: "Start your new project",
+    contactSubheading: "Need help? Contact us and we will reach out shortly.",
+    contactCta: "Send Message",
+    footerDescription: "Advertising technology experts that drive business results.",
+  },
+  "corporate-red": {
+    brand: "XTRA Corporate",
+    links: ["Home", "Services", "FAQ's", "Blog", "Portfolio", "About Us", "Contact"],
+    announcement: "Hotline 24/7 — +1 (800) 345 678",
+    eyebrow: "Hotline 24/7",
+    heroTitle: "We Bring Experimental",
+    heroSubtitle: "Tackle your most significant business challenges with behavioral science, anthropology and strategic foresight to create powerful solutions.",
+    heroCta: "Find Out How?",
+    infoHeading: "Numbers that speak",
+    infoSubheading: "Happy clients, long partnerships and projects delivered successfully.",
+    info2Heading: "Strategy that delivers",
+    info2Paragraph: "Practical, measurable solutions designed around the challenges your business faces today.",
+    testiHeading: "Client success stories",
+    testiSubheading: "Partners who grew with us.",
+    contactHeading: "Get a free quote",
+    contactSubheading: "Share your requirements and our team will prepare a tailored offer.",
+    contactCta: "Get A Free Quote",
+    footerDescription: "Experimental thinking for real business results.",
+  },
+  construction: {
+    brand: "XTRA Construction",
+    links: ["Home", "About", "Services", "FAQ", "Blog", "Contact"],
+    announcement: "Have any questions? Call +1 (818) 23 45 678",
+    eyebrow: "Since 1998",
+    heroTitle: "START NEW PROJECTS",
+    heroSubtitle: "Don’t get framed by the competition, trust our solid reputation.",
+    heroCta: "Free Consultation",
+    infoHeading: "Building Engineering & Safety Services",
+    infoSubheading: "Explore our wide range of professional construction and road building services.",
+    info2Heading: "Quality materials, skilled crew",
+    info2Paragraph: "Our experienced team and carefully selected materials make sure every build lasts.",
+    testiHeading: "Happy customers",
+    testiSubheading: "What our clients say about working with us.",
+    contactHeading: "Request a free consultation",
+    contactSubheading: "Tell us about your project and we will schedule a site visit.",
+    contactCta: "Free Consultation",
+    footerDescription: "Quality construction you can rely on.",
+  },
+};
+
+const IDENTITY = {
+  announcement: ["text", (c) => c.announcement],
+  header: ["brandName", (c) => c.brand],
+  hero: ["title", (c) => c.heroTitle],
+  info: ["heading", (c) => c.infoHeading],
+  info2: ["heading", (c) => c.info2Heading],
+  testimonials: ["heading", (c) => c.testiHeading],
+  contact: ["heading", (c) => c.contactHeading],
+  footer: ["copyright", (c) => `Copyright 2026 ${c.brand}. All Rights Reserved.`],
+};
+
+export function resolveVariant(section, item) {
+  if (item?.variant && DESIGNS[item.variant]) return item.variant;
+  const rule = IDENTITY[section];
+  if (rule && item) {
+    const [field, getValue] = rule;
+    const found = DESIGN_KEYS.find((k) => item[field] === getValue(DESIGN_CONTENT[k]));
+    if (found) return found;
+  }
+  return "business";
+}
+
+export const designColors = (key, section) => {
+  const d = DESIGNS[key] || DESIGNS.business;
+  return {
+    announcement: [d.accent, d.accentText],
+    header: [d.headerBg, d.headerText],
+    hero: [d.bg, d.text],
+    info: [d.alt, d.altText],
+    info2: [d.bg, d.text],
+    testimonials: [d.alt, d.altText],
+    contact: [d.bg, d.text],
+    footer: [d.footerBg, "#ffffff"],
+  }[section] || [d.bg, d.text];
+};
+
+export function buildSeed(key, isLive = false) {
+  const c = DESIGN_CONTENT[key];
+  const mk = (section, extra) => {
+    const [bgColor, textColor] = designColors(key, section);
+    return { variant: key, bgColor, textColor, isVisible: isLive, ...extra };
+  };
+  const toLinks = (arr) =>
+    arr.map((label, i) => ({
+      label,
+      url: i === 0 ? "/" : "/" + label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
+      isActive: true,
+      order: i + 1,
+    }));
+  return {
+    announcement: mk("announcement", { text: c.announcement }),
+    header: mk("header", { brandName: c.brand, links: toLinks(c.links) }),
+    hero: mk("hero", { title: c.heroTitle, subtitle: c.heroSubtitle, ctaText: c.heroCta, ctaUrl: "/contact" }),
+    info: mk("info", { heading: c.infoHeading, subheading: c.infoSubheading }),
+    info2: mk("info2", { heading: c.info2Heading, paragraph: c.info2Paragraph, imagePosition: "right" }),
+    testimonials: mk("testimonials", { heading: c.testiHeading, subheading: c.testiSubheading }),
+    contact: mk("contact", {
+      heading: c.contactHeading, subheading: c.contactSubheading,
+      phone: "+1 (818) 23 45 678", email: "hello@example.com", address: "New York, USA",
+      submitText: c.contactCta,
+    }),
+    footer: mk("footer", {
+      brandName: c.brand,
+      copyright: `Copyright 2026 ${c.brand}. All Rights Reserved.`,
+      description: c.footerDescription,
+      links: toLinks(c.links.slice(0, 4)),
+    }),
+  };
+}
 
 export const SECTION_MAP = {
   announcement: {
@@ -57,8 +251,8 @@ export const SECTION_MAP = {
   },
   info: {
     key: "info",
-    title: { ar: "من نحن", en: "About Us" },
-    desc: { ar: "قدمي المكان وقصته وخدماته", en: "Introduce your brand, story and services" },
+    title: { ar: "من نحن / الخدمات (مع سلايدر)", en: "About Us & Services (Slider)" },
+    desc: { ar: "عرض الخدمات والميزات في سلايدر تفاعلي", en: "Introduce your brand with an interactive slider" },
     icon: Info,
     color: "#10b981",
     fields: [
@@ -87,8 +281,8 @@ export const SECTION_MAP = {
   },
   testimonials: {
     key: "testimonials",
-    title: { ar: "آراء الزوار", en: "Testimonials" },
-    desc: { ar: "اعرضي تجارب وآراء العملاء", en: "Show customer stories and reviews" },
+    title: { ar: "آراء الزوار (سلايدر)", en: "Testimonials Slider" },
+    desc: { ar: "اعرضي تجارب وآراء العملاء بسلايدر", en: "Show customer reviews with a smooth slider" },
     icon: MessageSquare,
     color: "#f59e0b",
     fields: [
@@ -106,7 +300,7 @@ export const SECTION_MAP = {
     icon: PhoneCall,
     color: "#ec4899",
     fields: [
-      { name: "heading", type: "text", label: { ar: "عنوان الدعوة للانضمام", en: "Membership Heading" } },
+      { name: "heading", type: "text", label: { ar: "عنوان التواصل", en: "Membership Heading" } },
       { name: "subheading", type: "textarea", label: { ar: "رسالة الترحيب", en: "Welcome Message" } },
       { name: "phone", type: "text", label: { ar: "رقم الهاتف / الواتساب", en: "Phone Number" } },
       { name: "email", type: "text", label: { ar: "البريد الإلكتروني", en: "Email Address" } },
@@ -127,13 +321,19 @@ export const SECTION_MAP = {
       { name: "brandName", type: "text", label: { ar: "اسم المكان", en: "Brand Name" } },
       { name: "copyright", type: "text", label: { ar: "حقوق النشر والملكية", en: "Copyright Text" } },
       { name: "description", type: "textarea", label: { ar: "نبذة الفوتر / الشعار", en: "Footer Description / Tagline" } },
-      { name: "links", type: "links", label: { ar: "روابط الفوتر", en: "Footer Navigation Links" } },
       { name: "bgColor", type: "color", label: { ar: "لون الخلفية", en: "Background Color" } },
       { name: "textColor", type: "color", label: { ar: "لون النص", en: "Text Color" } },
       { name: "isVisible", type: "toggle", label: { ar: "تفعيل القسم", en: "Is Active" } }
     ]
   }
 };
+
+const VARIANT_FIELD = {
+  name: "variant",
+  type: "variant",
+  label: { ar: "التصميم", en: "Design" },
+};
+Object.values(SECTION_MAP).forEach((s) => s.fields.unshift(VARIANT_FIELD));
 
 export const GROUPS = [
   {
@@ -160,118 +360,3 @@ export const GROUPS = [
     ]
   }
 ];
-
-export const GYM_PRESETS = {
-  announcement: { match: { text: "MOVE. BREATH. WORKOUT. LIVE. LOVE. REPEAT." } },
-  header: { match: { brandName: "GYM" } },
-  hero: { match: { title: "Results Driven Fitness Trainings." } },
-  info: { match: { heading: "Feel good, look gorgeous." } },
-  info2: { match: { heading: "Unlimited Training" } },
-  testimonials: { match: { heading: "Enjoyed The Experience" } },
-  contact: { match: { heading: "Join The Club" } },
-  footer: { match: { copyright: "Copyright 2026 XTRA GYM. All Rights Reserved." } },
-};
-
-export const RESTAURANT_PRESETS = {
-  announcement: {
-    match: { text: "GOOD FOOD MAKES GREAT MOOD" },
-    values: {
-      text: "GOOD FOOD MAKES GREAT MOOD",
-      bgColor: "#242522",
-      textColor: "#f6f1e8",
-      isVisible: false,
-    },
-  },
-  header: {
-    match: { brandName: "Restaurant" },
-    values: {
-      brandName: "Restaurant",
-      bgColor: "#242522",
-      textColor: "#f6f1e8",
-      links: [
-        { label: "Home", url: "/", isActive: true, order: 1 },
-        { label: "Menus", url: "/our-menu", isActive: true, order: 2 },
-        { label: "Order", url: "/shop", isActive: true, order: 3 },
-        { label: "About", url: "/about-us", isActive: true, order: 4 },
-        { label: "Reserve", url: "/reserve-contact-2", isActive: true, order: 5 },
-        { label: "Contact", url: "/reserve-contact-2", isActive: true, order: 6 },
-      ],
-      isVisible: false,
-    },
-  },
-  hero: {
-    match: { title: "Good food makes great mood" },
-    values: {
-      title: "Good food makes great mood",
-      subtitle: "Not fast food, but good food fast.",
-      ctaText: "Reserve Your Table",
-      ctaUrl: "/reserve-contact-2",
-      bgColor: "#242522",
-      textColor: "#f6f1e8",
-      isVisible: false,
-    },
-  },
-  info: {
-    match: { heading: "Traditional & Family Recipes" },
-    values: {
-      heading: "Traditional & Family Recipes",
-      subheading: "A welcoming neighborhood table, serving familiar favorites and fresh flavors made for sharing.",
-      bgColor: "#f6f1e8",
-      textColor: "#242522",
-      isVisible: false,
-    },
-  },
-  info2: {
-    match: { heading: "Foods Menu" },
-    values: {
-      heading: "Foods Menu",
-      paragraph: "Browse seasonal starters, fresh salads, soups, and satisfying main dishes.",
-      imagePosition: "right",
-      image: "",
-      bgColor: "#242522",
-      textColor: "#f6f1e8",
-      isVisible: false,
-    },
-  },
-  testimonials: {
-    match: { heading: "Happy Visitors" },
-    values: {
-      heading: "Happy Visitors",
-      subheading: "Good meals and warm hospitality, remembered by our guests.",
-      bgColor: "#f6f1e8",
-      textColor: "#242522",
-      isVisible: false,
-    },
-  },
-  contact: {
-    match: { heading: "Reserve Your Table" },
-    values: {
-      heading: "Reserve Your Table",
-      subheading: "Planning a visit? Send us a reservation request and our team will be in touch.",
-      phone: "",
-      email: "",
-      address: "",
-      submitText: "Request a Table",
-      bgColor: "#242522",
-      textColor: "#f6f1e8",
-      isVisible: false,
-    },
-  },
-  footer: {
-    match: { copyright: "Copyright 2026 Restaurant. All Rights Reserved." },
-    values: {
-      brandName: "Restaurant",
-      copyright: "Copyright 2026 Restaurant. All Rights Reserved.",
-      description: "Good food makes great mood.",
-      links: [
-        { label: "Home", url: "/", isActive: true, order: 1 },
-        { label: "Menus", url: "/our-menu", isActive: true, order: 2 },
-        { label: "Reserve", url: "/reserve-contact-2", isActive: true, order: 3 },
-        { label: "Contact", url: "/reserve-contact-2", isActive: true, order: 4 },
-      ],
-      bgColor: "#171815",
-      textColor: "#f6f1e8",
-      isVisible: false,
-    },
-  },
-};

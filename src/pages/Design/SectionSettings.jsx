@@ -28,7 +28,8 @@ import {
 import { useGet } from "../../hooks/useGet";
 import { useMutation } from "../../hooks/useMutation";
 import { toast } from "sonner";
-import { SECTION_MAP, GYM_PRESETS, RESTAURANT_PRESETS } from "./sectionsConfig";
+import { SECTION_MAP, DESIGNS, DESIGN_KEYS, buildSeed, resolveVariant } from "./sectionsConfig";
+import SectionDesignPreview, { VariantField } from "./DesignPreview";
 
 // ─── Shared Styles ─────────────────────────────────────────────────────────────
 const inputCls =
@@ -241,6 +242,8 @@ function Field({ field, value, onChange, lang, file, onFile }) {
       );
     case "links":
       return <LinksField value={value} onChange={onChange} lang={lang} />;
+    case "variant":
+      return <VariantField value={value} onChange={onChange} lang={lang} />;
     case "textarea":
       return (
         <textarea
@@ -274,654 +277,6 @@ function FormSkeleton() {
   );
 }
 
-// ─── Live Preview Components ────────────────────────────────────────────────    
-function BrowserChrome() {
-  return (
-    <div className="flex items-center gap-1.5 border-b border-slate-100 bg-slate-100/80 px-3 py-2">
-      <span className="h-2.5 w-2.5 rounded-full bg-rose-400" />
-      <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
-      <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
-      <span className="ms-2 flex-1 rounded bg-white/70 px-2 py-0.5 text-[9px] font-mono text-slate-400">
-        wegostores.com
-      </span>
-    </div>
-  );
-}
-
-function HeaderPreview({ form, files, isRtl }) {
-  const [rotatingLink, setRotatingLink] = useState(null);
-  const logoPreview = useMemo(() => {
-    if (files?.logo) return URL.createObjectURL(files.logo);
-    if (!form?.logo) return null;
-    return /^(https?:|blob:)/.test(form.logo)
-      ? form.logo
-      : `${import.meta.env.VITE_API_URL || ""}${form.logo}`;
-  }, [files?.logo, form?.logo]);
-
-  const bgColor = form?.bgColor || "#111312";
-  const textColor = form?.textColor || "#f5f6f2";
-  const isGymHeader = form?.brandName === GYM_PRESETS.header.match.brandName;
-  const isRestaurantHeader = form?.brandName === RESTAURANT_PRESETS.header.match.brandName;
-  const isInteractiveHeader = isGymHeader || isRestaurantHeader;
-  const brandName = form?.brandName || "GYM";
-  const links = (form?.links || []).filter((l) => l.isActive !== false);
-
-  return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-md">
-      <BrowserChrome />
-      <div
-        className="flex items-center justify-between px-5 py-3.5 transition-all duration-300"
-        style={{ backgroundColor: bgColor, color: textColor }}
-      >
-        <div className="group flex items-center gap-2">
-          {logoPreview ? (
-            <img
-              src={logoPreview}
-              alt=""
-              className={`h-8 w-8 rounded-lg object-contain ${isGymHeader ? "transition-transform duration-700 group-hover:rotate-[360deg]" : ""}`}
-            />
-          ) : (
-            <div
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-xs font-black"
-              style={{ backgroundColor: textColor + "18", color: textColor }}
-            >
-                {isGymHeader
-                  ? <Dumbbell className="h-5 w-5 transition-transform duration-700 group-hover:rotate-[360deg]" />
-                  : isRestaurantHeader
-                    ? <UtensilsCrossed className="h-5 w-5 transition-transform duration-700 group-hover:rotate-[360deg]" />
-                    : brandName[0]?.toUpperCase() || "B"}
-            </div>
-          )}
-          <span className="text-sm font-extrabold tracking-tight transition-all duration-200">
-            {brandName}
-          </span>
-        </div>
-
-        <div className={`${isInteractiveHeader ? "flex" : "hidden sm:flex"} min-w-0 items-center gap-4 text-[11px] font-semibold opacity-85 ${isInteractiveHeader ? "ms-8 max-w-[48%] overflow-x-auto whitespace-nowrap scrollbar-none" : ""}`}>
-          {links.length > 0 ? (
-            links.slice(0, isInteractiveHeader ? 7 : 4).map((l, i) =>
-              isInteractiveHeader ? (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => setRotatingLink(i)}
-                  onAnimationEnd={() => setRotatingLink(null)}
-                  className={`shrink-0 transition-colors ${isRestaurantHeader ? "hover:text-[#c15d34]" : "hover:text-[#c8f169]"} ${rotatingLink === i ? "animate-[spin_0.55s_ease-in-out]" : ""}`}
-                >
-                  {l.label || `Link ${i + 1}`}
-                </button>
-              ) : (
-                <span key={i} className="transition-all duration-200">
-                  {l.label || `Link ${i + 1}`}
-                </span>
-              )
-            )
-          ) : (
-            <>
-              <span>{isRtl ? "الرئيسية" : "Home"}</span>
-              <span>{isRtl ? "الحصص" : "Classes"}</span>
-              <span>{isRtl ? "المدربون" : "Coaches"}</span>
-            </>
-          )}
-        </div>
-
-        <span
-          className="rounded-lg px-3 py-1 text-[11px] font-bold shadow-sm transition-all duration-200"
-          style={{ backgroundColor: isRestaurantHeader ? "#c15d34" : "#c8f169", color: isRestaurantHeader ? "#ffffff" : "#111312" }}
-        >
-          {isGymHeader
-            ? isRtl ? "احصل على تذكرتك" : "Get Your Free Pass"
-            : isRestaurantHeader ? "Reserve Your Table" : isRtl ? "ابدأ" : "Get Started"}
-        </span>
-      </div>
-
-      <div className="bg-slate-50 px-5 py-6 space-y-3">
-        <div className="h-3 w-2/3 rounded-full bg-slate-200" />
-        <div className="h-2.5 w-full rounded-full bg-slate-100" />
-        <div className="h-2.5 w-5/6 rounded-full bg-slate-100" />
-        <div className="mt-4 flex gap-2">
-          <div className="h-7 w-24 rounded-xl bg-blue-500/20" />
-          <div className="h-7 w-20 rounded-xl bg-slate-200" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function AnnouncementPreview({ form, isRtl }) {
-  const bgColor = form?.bgColor || "#ef4444";
-  const textColor = form?.textColor || "#ffffff";
-  const text =
-    form?.text ||
-    (isRtl
-      ? "ابدئي رحلتك الرياضية اليوم مع إكسترا جيم"
-      : "Start your fitness journey today at XTRA GYM");
-
-  return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-md">
-      <BrowserChrome />
-      <div
-        className="flex items-center justify-between px-5 py-2.5 transition-all duration-300"
-        style={{ backgroundColor: bgColor, color: textColor }}
-      >
-        <div className="flex items-center gap-2 text-xs font-bold">
-          <Megaphone className="h-3.5 w-3.5 shrink-0 animate-bounce" />
-          <span className="transition-all duration-200">{text}</span>
-        </div>
-        <span
-          className="rounded px-2.5 py-0.5 text-[10px] font-bold shrink-0"
-          style={{ backgroundColor: textColor + "28", color: textColor }}
-        >
-          {isRtl ? "انضمي الآن" : "Join Now"}
-        </span>
-      </div>
-
-      <div className="flex items-center justify-between border-b border-slate-100 bg-white px-5 py-3">
-        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500/10 text-xs font-black text-blue-600">
-          W
-        </div>
-        <div className="flex gap-3 text-[11px] text-slate-500">
-          <span>{isRtl ? "الرئيسية" : "Home"}</span>
-          <span>{isRtl ? "المتجر" : "Store"}</span>
-          <span>{isRtl ? "عنا" : "About"}</span>
-        </div>
-        <div className="h-6 w-16 rounded-lg bg-slate-900" />
-      </div>
-
-      <div className="bg-slate-50 px-5 py-6 space-y-3">
-        <div className="h-3 w-2/3 rounded-full bg-slate-200" />
-        <div className="h-2.5 w-full rounded-full bg-slate-100" />
-        <div className="h-2.5 w-5/6 rounded-full bg-slate-100" />
-      </div>
-    </div>
-  );
-}
-
-function HeroPreview({ form, files, isRtl }) {
-  const isRestaurantHero = form?.title === RESTAURANT_PRESETS.hero.match.title;
-  const backgroundColor = form?.bgColor || "#111312";
-  const textColor = form?.textColor || "#ffffff";
-  const imgPreview = useMemo(() => {
-    if (files?.image) return URL.createObjectURL(files.image);
-    if (!form?.image) return null;
-    return /^(https?:|blob:)/.test(form.image)
-      ? form.image
-      : `${import.meta.env.VITE_API_URL || ""}${form.image}`;
-  }, [files?.image, form?.image]);
-
-  return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 shadow-md">
-      <div className="flex items-center gap-1.5 border-b border-slate-800 bg-slate-800/80 px-3 py-2">
-        <span className="h-2.5 w-2.5 rounded-full bg-rose-500/80" />
-        <span className="h-2.5 w-2.5 rounded-full bg-amber-500/80" />
-        <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/80" />
-        <span className="ms-2 flex-1 rounded bg-slate-700/60 px-2 py-0.5 text-[9px] font-mono text-slate-400">
-          wegostores.com
-        </span>
-      </div>
-
-      <div className="grid grid-cols-2 items-center gap-4 p-6" style={{ backgroundColor }}>
-        <div className="space-y-3">
-          <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold border ${isRestaurantHero ? "border-[#c15d34]/40 bg-[#c15d34]/15 text-[#f0a282]" : "border-[#c8f169]/30 bg-[#c8f169]/15 text-[#c8f169]"}`}>
-            <Sparkles className="h-2.5 w-2.5" />
-            {isRestaurantHero ? isRtl ? "طازج يوميًا" : "FRESH EVERY DAY" : isRtl ? "نتائج حقيقية" : "RESULTS DRIVEN"}
-          </span>
-          <h4 className="text-sm font-extrabold leading-tight transition-all duration-200" style={{ color: textColor }}>
-            {form?.title || (isRtl ? "تدريب لياقة يحقق أهدافك" : "FITNESS TRAINING THAT GETS RESULTS")}
-          </h4>
-          <p className="text-xs line-clamp-2 transition-all duration-200 opacity-80" style={{ color: textColor }}>
-            {form?.subtitle || (isRtl ? "تدريب شخصي وحصص جماعية ومدربون خبراء لمساعدتك على تحقيق أهدافك." : "Personal training, group classes and expert coaches to help you reach your goals.")}
-          </p>
-          <div className="flex items-center gap-2 pt-1">
-            <span className={`rounded-xl px-3 py-1.5 text-[11px] font-bold shadow-md transition-all duration-200 ${isRestaurantHero ? "bg-[#c15d34] text-white" : "bg-[#c8f169] text-slate-950"}`}>
-              {form?.ctaText || (isRtl ? "احصل على تذكرتك المجانية" : "Get Your Free Pass")}
-            </span>
-            {!isRestaurantHero && (
-              <span className="flex items-center gap-1 rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-1.5 text-[11px] font-bold text-slate-300">
-                <Play className="h-3 w-3 fill-slate-300" />
-                {isRtl ? "شرح" : "Demo"}
-              </span>
-            )}
-          </div>
-        </div>
-
-        <div className="relative overflow-hidden rounded-xl border border-slate-700/60 shadow-lg aspect-video bg-slate-800">
-          {imgPreview ? (
-            <img src={imgPreview} alt="" className="h-full w-full object-cover" />
-          ) : (
-            <div className="flex h-full items-center justify-center text-slate-600">
-              <ImagePlus className="h-8 w-8" />
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function GenericSectionPreview({ section, form, isRtl }) {
-  const cfg = SECTION_MAP[section];
-  const Icon = cfg?.icon;
-  return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-md">
-      <BrowserChrome />
-      <div className="p-8 flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-slate-50 to-white text-center min-h-[180px]">
-        {Icon && (
-          <div
-            className="flex h-14 w-14 items-center justify-center rounded-2xl shadow-inner"
-            style={{ background: `${cfg.color}15`, color: cfg.color }}
-          >
-            <Icon className="h-7 w-7" />
-          </div>
-        )}
-        <div>
-          <h4 className="text-sm font-extrabold text-slate-900">
-            {cfg?.title[isRtl ? "ar" : "en"]}
-          </h4>
-          <p className="mt-1 text-xs text-slate-400">{cfg?.desc[isRtl ? "ar" : "en"]}</p>
-        </div>
-        <div
-          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold transition-all duration-300 ${
-            form?.isVisible
-              ? "bg-emerald-50 text-emerald-600"
-              : "bg-slate-100 text-slate-500"
-          }`}
-        >
-          <span
-            className={`h-2 w-2 rounded-full ${
-              form?.isVisible ? "bg-emerald-500 animate-pulse" : "bg-slate-400"
-            }`}
-          />
-          {form?.isVisible
-            ? isRtl
-              ? "نشط في الموقع"
-              : "Live on site"
-            : isRtl
-              ? "غير نشط"
-              : "Not active"}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function InfoPreview({ form, files, isRtl, isSecondary }) {
-  const imgPreview = useMemo(() => {
-    if (files?.image) return URL.createObjectURL(files.image);
-    if (!form?.image) return null;
-    return /^(https?:|blob:)/.test(form.image)
-      ? form.image
-      : `${import.meta.env.VITE_API_URL || ""}${form.image}`;
-  }, [files?.image, form?.image]);
-
-  const bgColor = form?.bgColor || "#ffffff";
-  const textColor = form?.textColor || "#0f172a";
-  const isRestaurantSection =
-    form?.heading === RESTAURANT_PRESETS.info.match.heading ||
-    form?.heading === RESTAURANT_PRESETS.info2.match.heading;
-  const heading =
-    form?.heading ||
-    form?.title ||
-    (isRtl
-      ? isSecondary
-        ? "تدريبات تناسب أسلوب حياتك"
-        : "اشعري بالقوة، وحققي أهدافك"
-      : isSecondary
-      ? "TRAINING FOR EVERY BODY"
-      : "FEEL STRONGER. REACH FURTHER.");
-  const subheading =
-    form?.subheading ||
-    form?.paragraph ||
-    form?.description ||
-    (isRtl
-      ? "في إكسترا جيم، هتلاقي مدربين خبراء وحصص متنوعة ومساحة تشجعك توصلي لأهدافك."
-      : "Expert coaches, energizing classes and a welcoming space to help you reach your fitness goals.");
-  const ctaText = isRestaurantSection ? "" : form?.ctaText || (isRtl ? "اكتشف المزيد" : "Learn More");
-
-  return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-md">
-      <BrowserChrome />
-      <div
-        className="p-5 sm:p-6 transition-all duration-300"
-        style={{ backgroundColor: bgColor, color: textColor }}
-      >
-        <div
-          className={`grid grid-cols-1 sm:grid-cols-12 gap-5 items-center ${
-            isSecondary && !isRtl ? "sm:flex-row-reverse" : ""
-          }`}
-        >
-          <div className="sm:col-span-7 space-y-2.5">
-            <span
-              className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold"
-              style={{ backgroundColor: textColor + "15", color: textColor }}
-            >
-              <Sparkles className="h-3 w-3" />
-              {isRestaurantSection
-                ? isSecondary ? "FOOD MENU" : "OUR STORY"
-                : isSecondary
-                ? isRtl
-                  ? "مميزات حصرية"
-                  : "Key Highlights"
-                : isRtl
-                ? "من نحن"
-                : "Our Mission"}
-            </span>
-            <h4 className="text-sm sm:text-base font-extrabold leading-tight">
-              {heading}
-            </h4>
-            <p className="text-xs opacity-80 leading-relaxed line-clamp-3">
-              {subheading}
-            </p>
-            {ctaText && (
-              <div className="pt-1">
-                <span
-                  className="inline-block rounded-xl px-3.5 py-1.5 text-[11px] font-bold shadow-sm"
-                  style={{
-                    backgroundColor: textColor,
-                    color: bgColor === "#ffffff" ? "#ffffff" : bgColor,
-                  }}
-                >
-                  {ctaText}
-                </span>
-              </div>
-            )}
-          </div>
-
-          <div className="sm:col-span-5">
-            <div className="relative overflow-hidden rounded-xl border border-slate-200/80 bg-slate-100 aspect-video flex items-center justify-center">
-              {imgPreview ? (
-                <img
-                  src={imgPreview}
-                  alt=""
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex flex-col items-center justify-center text-slate-400 gap-1">
-                  <ImagePlus className="h-6 w-6" />
-                  <span className="text-[10px] font-bold">
-                    {isRtl ? "صورة القسم" : "Section Image"}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function TestimonialsPreview({ form, isRtl }) {
-  const bgColor = form?.bgColor || "#f8fafc";
-  const textColor = form?.textColor || "#0f172a";
-  const isRestaurant = form?.heading === RESTAURANT_PRESETS.testimonials.match.heading;
-  const heading =
-    form?.heading ||
-    form?.title ||
-    (isRtl ? "حكايات أبطالنا" : "MEMBER STORIES");
-  const subheading =
-    form?.subheading ||
-    form?.subtitle ||
-    (isRestaurant
-      ? "Good meals and warm hospitality, remembered by our guests."
-      : isRtl
-        ? "تجارب حقيقية من أعضاء إكسترا جيم"
-        : "Real stories from the XTRA GYM community");
-  const clientName = form?.clientName || (isRestaurant ? "Restaurant Guest" : isRtl ? "جيدن سميث" : "Jaden Smith");
-  const clientRole =
-    form?.clientRole || (isRestaurant ? "Guest" : isRtl ? "عضو في إكسترا جيم" : "XTRA GYM Member");
-  const feedback =
-    form?.feedback ||
-    (isRestaurant
-      ? "A relaxed atmosphere, thoughtful service, and a meal worth coming back for."
-      : isRtl
-      ? "من أغسطس وأنا بتدرب مع مدرب في إكسترا جيم، والتجربة فرقت معايا جدًا. جسمي بقى في أحسن حالة."
-      : "I've been training at XTRA GYM since August. The coaching has made a real difference, and I'm in the best shape of my life.");
-  const ratingNum = Math.max(1, Math.min(5, parseInt(form?.rating, 10) || 5));
-
-  return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-md">
-      <BrowserChrome />
-      <div
-        className="p-5 sm:p-6 transition-all duration-300"
-        style={{ backgroundColor: bgColor, color: textColor }}
-      >
-        <div className="text-center space-y-1 mb-4">
-          <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[10px] font-bold text-amber-600">
-            <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
-            {isRtl ? "آراء حقيقية" : "Verified Reviews"}
-          </span>
-          <h4 className="text-base font-extrabold tracking-tight">{heading}</h4>
-          <p className="text-xs opacity-75 max-w-sm mx-auto line-clamp-1">
-            {subheading}
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1 text-amber-400">
-              {Array.from({ length: ratingNum }).map((_, i) => (
-                <Star
-                  key={i}
-                  className="h-3.5 w-3.5 fill-amber-400 text-amber-400"
-                />
-              ))}
-            </div>
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-600">
-              <CheckCircle2 className="h-3 w-3" />
-              {clientRole}
-            </span>
-          </div>
-
-          <p className="text-xs text-slate-700 italic leading-relaxed line-clamp-3">
-            "{feedback}"
-          </p>
-
-          <div className="flex items-center gap-2.5 pt-2 border-t border-slate-100">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 text-xs font-bold text-white">
-              {clientName[0]?.toUpperCase() || "C"}
-            </div>
-            <div>
-              <p className="text-xs font-bold text-slate-900">{clientName}</p>
-              <p className="text-[10px] text-slate-400">{clientRole}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ContactPreview({ form, isRtl }) {
-  const bgColor = form?.bgColor || "#ffffff";
-  const textColor = form?.textColor || "#0f172a";
-  const isRestaurant = form?.heading === RESTAURANT_PRESETS.contact.match.heading;
-  const heading = form?.heading || (isRtl ? "انضمي إلى النادي" : "JOIN THE CLUB");
-  const subheading =
-    form?.subheading ||
-    (isRtl
-      ? "ابدئي رحلتك الرياضية واحجزي تقييمك المجاني مع فريقنا."
-      : "Start your fitness journey and book a free assessment with our team.");
-  const phone = form?.phone || (isRestaurant ? (isRtl ? "للحجز، تواصلي معنا" : "Contact us to reserve") : "+20 123 456 7890");
-  const email = form?.email || (isRestaurant ? (isRtl ? "استفسارات الحجز" : "Reservation inquiries") : "hello@xtragym.com");
-  const address = form?.address || (isRestaurant ? (isRtl ? "أضيفي عنوان المطعم" : "Add restaurant address") : (isRtl ? "القاهرة، مصر" : "Cairo, Egypt"));
-  const submitText = form?.submitText || (isRestaurant ? (isRtl ? "اطلبي طاولة" : "Request a Table") : (isRtl ? "احجزي تقييمك" : "Book Your Assessment"));
-
-  return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-md">
-      <BrowserChrome />
-      <div
-        className="p-5 sm:p-6 transition-all duration-300"
-        style={{ backgroundColor: bgColor, color: textColor }}
-      >
-        <div className="text-center space-y-1 mb-5">
-          <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2.5 py-0.5 text-[10px] font-bold text-blue-600">
-            <Mail className="h-3 w-3" />
-            {isRestaurant ? isRtl ? "حجوزات المطعم" : "TABLE RESERVATIONS" : isRtl ? "خدمة العملاء" : "24/7 Support"}
-          </span>
-          <h4 className="text-base font-extrabold tracking-tight">{heading}</h4>
-          <p className="text-xs opacity-75 max-w-sm mx-auto line-clamp-2">
-            {subheading}
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
-          <div className="sm:col-span-5 space-y-2">
-            <div className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 text-xs text-slate-800">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 shrink-0">
-                <Phone className="h-3.5 w-3.5" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-[10px] font-medium text-slate-400">{isRtl ? "الهاتف" : "Phone"}</p>
-                <p className="truncate font-bold text-[11px]">{phone}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 text-xs text-slate-800">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-pink-500/10 text-pink-600 shrink-0">
-                <Mail className="h-3.5 w-3.5" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-[10px] font-medium text-slate-400">{isRtl ? "البريد" : "Email"}</p>
-                <p className="truncate font-bold text-[11px]">{email}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 text-xs text-slate-800">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 shrink-0">
-                <MapPin className="h-3.5 w-3.5" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-[10px] font-medium text-slate-400">{isRtl ? "العنوان" : "Location"}</p>
-                <p className="truncate font-bold text-[11px]">{address}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="sm:col-span-7 rounded-2xl border border-slate-100 bg-white p-3.5 shadow-sm space-y-2">
-            <div className="h-7 w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 flex items-center text-[10px] text-slate-400">
-              {isRtl ? "الاسم الكريم..." : "Your name..."}
-            </div>
-            <div className="h-7 w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 flex items-center text-[10px] text-slate-400">
-              {isRtl ? "البريد الإلكتروني..." : "Your email..."}
-            </div>
-            <div className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 p-2 flex items-start text-[10px] text-slate-400">
-              {isRtl ? "اكتب رسالتك هنا..." : "Your message..."}
-            </div>
-            <button
-              type="button"
-              className="w-full rounded-xl bg-blue-600 py-1.5 text-center text-xs font-bold text-white shadow-sm"
-            >
-              {submitText}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function FooterPreview({ form, isRtl }) {
-  const bgColor = form?.bgColor || "#0f172a";
-  const textColor = form?.textColor || "#f8fafc";
-  const copyright =
-    form?.copyright ||
-    (isRtl
-      ? `© ${new Date().getFullYear()} إكسترا جيم. جميع الحقوق محفوظة.`
-      : `© ${new Date().getFullYear()} XTRA GYM. All rights reserved.`);
-  const text =
-    form?.description ||
-    form?.text ||
-    (isRtl
-      ? "مساحتك للتدريب، الحركة، وتحقيق أهدافك."
-      : "Your space to train, move and reach your goals.");
-  const brandName = form?.brandName || (isRtl ? "الجيم" : "GYM");
-  const links = (form?.links || []).filter((l) => l.isActive !== false);
-
-  return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-md">
-      <BrowserChrome />
-      <div className="bg-slate-50 px-5 py-6 space-y-2 opacity-50">
-        <div className="h-2.5 w-1/3 rounded-full bg-slate-300" />
-        <div className="h-2 w-2/3 rounded-full bg-slate-200" />
-      </div>
-
-      <footer
-        className="px-5 py-6 transition-all duration-300"
-        style={{ backgroundColor: bgColor, color: textColor }}
-      >
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-white/10 pb-4">
-            <div className="max-w-xs space-y-1.5">
-              <div className="flex items-center gap-2">
-                <div
-                  className="flex h-6 w-6 items-center justify-center rounded-lg text-[10px] font-black"
-                  style={{ backgroundColor: textColor + "20", color: textColor }}
-                >
-                  {brandName[0]?.toUpperCase() || "G"}
-                </div>
-                <span className="text-xs font-black tracking-tight">{brandName}</span>
-              </div>
-              <p className="text-[11px] opacity-75 leading-relaxed line-clamp-2">
-                {text}
-              </p>
-            </div>
-
-            <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-[11px] font-medium opacity-90">
-              {links.length > 0 ? (
-                links.slice(0, 6).map((l, i) => (
-                  <span
-                    key={i}
-                    className="hover:underline transition-opacity cursor-default"
-                  >
-                    {l.label || `Link ${i + 1}`}
-                  </span>
-                ))
-              ) : (
-                <>
-                  <span>{isRtl ? "الرئيسية" : "Home"}</span>
-                  <span>{isRtl ? "الحصص" : "Classes"}</span>
-                  <span>{isRtl ? "المدربون" : "Coaches"}</span>
-                  <span>{isRtl ? "تواصل معنا" : "Contact"}</span>
-                </>
-              )}
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] opacity-70">
-            <span>{copyright}</span>
-            <span className="inline-flex items-center gap-1">
-              <span>{isRtl ? "مدعوم من" : "Powered by"}</span>
-              <span className="font-bold">Wegz Platform</span>
-            </span>
-          </div>
-        </div>
-      </footer>
-    </div>
-  );
-}
-
-function LivePreview({ section, form, files, isRtl }) {
-  if (section === "header")
-    return <HeaderPreview form={form} files={files} isRtl={isRtl} />;
-  if (section === "announcement")
-    return <AnnouncementPreview form={form} isRtl={isRtl} />;
-  if (section === "hero")
-    return <HeroPreview form={form} files={files} isRtl={isRtl} />;
-  if (section === "info")
-    return <InfoPreview form={form} files={files} isRtl={isRtl} isSecondary={false} />;
-  if (section === "info2")
-    return <InfoPreview form={form} files={files} isRtl={isRtl} isSecondary={true} />;
-  if (section === "testimonials")
-    return <TestimonialsPreview form={form} isRtl={isRtl} />;
-  if (section === "contact")
-    return <ContactPreview form={form} isRtl={isRtl} />;
-  if (section === "footer")
-    return <FooterPreview form={form} isRtl={isRtl} />;
-  return <GenericSectionPreview section={section} form={form} isRtl={isRtl} />;
-}
-
-// ─── Main Component ─────────────────────────────────────────────────────────────
 export default function SectionSettings() {
   const { section } = useParams();
   const [searchParams] = useSearchParams();
@@ -943,44 +298,55 @@ export default function SectionSettings() {
     return [];
   }, [data]);
   const [selectedId, setSelectedId] = useState(null);
+  const [pendingId, setPendingId] = useState(null);
 
   useEffect(() => {
-    if (records.length > 0) {
-      if (queryId && records.some((r) => r._id === queryId)) {
-        setSelectedId(queryId);
-      } else {
-        const activeRecord = records.find((r) => r.isVisible);
-        const exists = records.some((r) => r._id === selectedId);
-        if (!exists) {
-          setSelectedId(activeRecord ? activeRecord._id : records[0]._id);
-        }
-      }
-    } else {
+    if (records.length === 0) {
       setSelectedId(null);
+      return;
     }
-  }, [records, section, selectedId, queryId]);
+    if (pendingId) {
+      if (records.some((r) => r._id === pendingId)) {
+        setSelectedId(pendingId);
+        setPendingId(null);
+      }
+      return;
+    }
+    // نختار تلقائيًا بس لو مفيش اختيار صالح (أول فتح أو بعد حذف/إعادة تحميل)
+    if (!selectedId || !records.some((r) => r._id === selectedId)) {
+      const fromQuery = queryId && records.find((r) => r._id === queryId);
+      const active = records.find((r) => r.isVisible);
+      setSelectedId((fromQuery || active || records[0])._id);
+    }
+  }, [records, section, selectedId, queryId, pendingId]);
 
   const record = records.find((r) => r._id === selectedId) || records[0];
+
+  // السجل + التصميم المستنتج (حتى لو الباك إند مش بيحفظ variant)
+  const normRecord = useMemo(
+    () => (record ? { ...record, variant: resolveVariant(section, record) } : {}),
+    [record, section]
+  );
 
   const [form, setForm] = useState({});
   const [files, setFiles] = useState({});
 
   useEffect(() => {
-    setForm(record || {});
+    setForm(normRecord);
     setFiles({});
   }, [record?._id, section]);
 
   const dirty = useMemo(
     () =>
       Object.keys(files).length > 0 ||
-      JSON.stringify(form) !== JSON.stringify(record || {}),
-    [form, files, record]
+      JSON.stringify(form) !== JSON.stringify(normRecord),
+    [form, files, normRecord]
   );
 
   if (!cfg) return <div className="p-8 text-slate-600">Section not found</div>;
 
   const discard = () => {
-    setForm(record || {});
+    setForm(normRecord);
     setFiles({});
   };
 
@@ -997,6 +363,20 @@ export default function SectionSettings() {
       refetch();
     } else {
       toast.error(res.error || (isRtl ? "فشل التفعيل" : "Activation failed"));
+    }
+  };
+
+  // لو التصميم ده مالوش سجل لسه → نعمله من القالب الجاهز ونفتحه
+  const handleCreateDesign = async (key) => {
+    const seed = buildSeed(key, false)[section];
+    const res = await mutate(`/api/admin/sections/${section}`, "POST", seed);
+    if (res.success) {
+      const doc = res.data?.data || res.data;
+      toast.success(isRtl ? "تم إنشاء التصميم" : "Design created");
+      if (doc?._id) setPendingId(doc._id);
+      refetch();
+    } else {
+      toast.error(res.error || (isRtl ? "فشل الإنشاء" : "Could not create design"));
     }
   };
 
@@ -1106,75 +486,87 @@ export default function SectionSettings() {
                 </Link>
               </div>
 
-              {/* Preset Selector Bar */}
+              {/* Design Selector */}
               {!loading && records.length > 0 && (
-                <div className="border-b border-slate-100 bg-slate-50/60 px-6 sm:px-8 py-3.5">
-                  <div className="flex items-center justify-between gap-4 mb-2">
+                <div className="border-b border-slate-100 bg-slate-50/60 px-6 sm:px-8 py-4">
+                  <div className="mb-3 flex items-center justify-between gap-4">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                      {isRtl
-                        ? `النسخ المتاحة (${records.length})`
-                        : `Presets (${records.length})`}
+                      {isRtl ? "التصميم" : "Design"}
                     </span>
-
-                    {record && (
-                      <div className="flex items-center gap-2">
-                        {record.isVisible ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-600">
-                            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                            {isRtl ? "المعروض حالياً" : "Currently Live"}
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => handleSetActive(record)}
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50/80 px-2.5 py-1 text-xs font-bold text-emerald-700 transition hover:bg-emerald-600 hover:text-white"
-                          >
-                            <Check className="h-3.5 w-3.5" />
-                            {isRtl ? "تفعيل كـ أساسي" : "Set as Live"}
-                          </button>
-                        )}
-                        {records.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => handleDelete(record)}
-                            className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition"
-                            title={isRtl ? "حذف هذه النسخة" : "Delete preset"}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        )}
-                      </div>
-                    )}
+                    {record &&
+                      (record.isVisible ? (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-600">
+                          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                          {isRtl ? "المعروض حالياً" : "Currently Live"}
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleSetActive(record)}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50/80 px-2.5 py-1 text-xs font-bold text-emerald-700 transition hover:bg-emerald-600 hover:text-white"
+                        >
+                          <Check className="h-3.5 w-3.5" />
+                          {isRtl ? "تفعيل في الموقع" : "Set as Live"}
+                        </button>
+                      ))}
                   </div>
 
-                  <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-                    {records.map((r, idx) => {
-                      const isSelected = r._id === selectedId;
-                      const name =
-                        r.brandName ||
-                        r.heading ||
-                        r.title ||
-                        r.clientName ||
-                        r.copyright ||
-                        r.text ||
-                        (isRtl ? `نسخة ${idx + 1}` : `Variation ${idx + 1}`);
+                  <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+                    {DESIGN_KEYS.map((k) => {
+                      const d = DESIGNS[k];
+                      const r = records.find((x) => resolveVariant(section, x) === k);
+                      const isSelected = !!r && r._id === selectedId;
                       return (
                         <button
-                          key={r._id || idx}
+                          key={k}
                           type="button"
-                          onClick={() => setSelectedId(r._id)}
-                          className={`group relative flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-all shrink-0 ${
+                          disabled={saving}
+                          onClick={() => {
+                            if (r && r._id === selectedId) return;
+                            if (
+                              dirty &&
+                              !window.confirm(
+                                isRtl
+                                  ? "فيه تغييرات غير محفوظة هتضيع لو غيرتي التصميم. تكملي؟"
+                                  : "You have unsaved changes that will be lost. Continue?"
+                              )
+                            )
+                              return;
+                            if (r) setSelectedId(r._id);
+                            else handleCreateDesign(k);
+                          }}
+                          className={`relative flex flex-col items-start gap-2 rounded-2xl border p-3 text-start transition-all disabled:cursor-wait disabled:opacity-60 ${
                             isSelected
-                              ? "bg-white text-blue-600 shadow-sm border border-blue-500/30 ring-2 ring-blue-500/10"
-                              : "bg-white/60 text-slate-600 border border-slate-200/70 hover:bg-white hover:text-slate-900"
+                              ? "border-blue-500 bg-white shadow-sm ring-2 ring-blue-500/15"
+                              : r
+                                ? "border-slate-200/80 bg-white/60 hover:-translate-y-0.5 hover:bg-white hover:shadow-md"
+                                : "border-dashed border-slate-300 bg-white/40 hover:-translate-y-0.5 hover:border-blue-400 hover:bg-white"
                           }`}
                         >
-                          {r.isVisible && (
-                            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                          <span className="flex gap-1">
+                            {[d.bg, d.accent, d.alt].map((col, i) => (
+                              <span
+                                key={i}
+                                className="h-3.5 w-3.5 rounded-full border border-slate-200"
+                                style={{ background: col }}
+                              />
+                            ))}
+                          </span>
+                          <span
+                            className={`text-xs font-extrabold ${
+                              isSelected ? "text-blue-700" : "text-slate-700"
+                            }`}
+                          >
+                            {d.name[lang]}
+                          </span>
+                          {!r && (
+                            <span className="text-[10px] font-semibold text-blue-600">
+                              + {isRtl ? "إنشاء التصميم" : "Create design"}
+                            </span>
                           )}
-                          <span className="truncate max-w-[120px]">{name}</span>
-                          {r.isVisible && (
-                            <span className="rounded bg-emerald-100/70 px-1 py-0.5 text-[9px] font-bold text-emerald-700">
+                          {r?.isVisible && (
+                            <span className="absolute end-2 top-2 flex items-center gap-1 rounded bg-emerald-100/80 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700">
+                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                               LIVE
                             </span>
                           )}
@@ -1200,7 +592,7 @@ export default function SectionSettings() {
                 </div>
               ) : (
                 <div className="divide-y divide-slate-100">
-                  {cfg.fields.map((f) => (
+                  {cfg.fields.filter((f) => f.name !== "variant").map((f) => (
                     <div
                       key={f.name}
                       className="flex flex-col gap-2.5 px-6 sm:px-8 py-6 transition-colors hover:bg-slate-50/40"
@@ -1314,7 +706,7 @@ export default function SectionSettings() {
                   <div className="h-48 animate-pulse rounded-2xl bg-slate-200" />
                 ) : (
                   <div className="space-y-4">
-                    <LivePreview
+                    <SectionDesignPreview
                       section={section}
                       form={form}
                       files={files}

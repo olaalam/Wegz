@@ -1,591 +1,23 @@
-import { useMemo, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useMemo } from "react";
+import { useParams, Link } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Check, 
-  SlidersHorizontal, 
-  Plus, 
+import {
+  ChevronLeft,
+  ChevronRight,
+  Check,
+  SlidersHorizontal,
   Layers,
   ArrowRight,
   ArrowLeft,
-  Moon,
-  Sun,
-  Globe,
-  Megaphone,
-  Search,
-  ShoppingCart,
-  Sparkles,
-  ExternalLink,
-  Star,
-  Quote,
-  Mail,
-  Phone,
-  MapPin,
-  CheckCircle2,
-  Play,
-  Dumbbell,
-  UtensilsCrossed
 } from "lucide-react";
+import { toast } from "sonner";
 import { useGet } from "../../hooks/useGet";
 import { useMutation } from "../../hooks/useMutation";
-import { SECTION_MAP, GYM_PRESETS, RESTAURANT_PRESETS } from "./sectionsConfig";
-import { toast } from "sonner";
-
-// Distinct visual presets and configurations for EVERY section
-const SECTION_TEMPLATES = {
-  header: [
-    {
-      id: "announcement-bar",
-      titleEn: "Header with Announcement Bar",
-      titleAr: "هيدر مع شريط إعلانات علوي",
-      descEn: "Top promotional banner with discounts & announcements above navigation",
-      descAr: "شريط ترويجي وتنبيهات علوي لعرض الخصومات والأخبار المهمة",
-      badge: "Promo & Sales",
-      badgeColor: "bg-rose-50 text-rose-600 border-rose-200",
-      features: ["Top Announcement Banner", "Standard Navigation", "Action Button"],
-      type: "announcement"
-    },
-    {
-      id: "lang-and-theme",
-      titleEn: "Multilingual & Dark/Light Switcher",
-      titleAr: "هيدر بدعم اللغات (AR / EN) ووضع ليلي/نهاري",
-      descEn: "Equipped with Dark/Light toggle and language switch for international stores",
-      descAr: "مزود بمحول الوضع الليلي/النهاري ومبدل اللغة للتطبيقات والمتاجر متعددة اللغات",
-      badge: "Multilingual & Themes",
-      badgeColor: "bg-purple-50 text-purple-600 border-purple-200",
-      features: ["Language Toggle (AR/EN)", "Dark / Light Switch", "Clean Links"],
-      type: "lang-theme"
-    },
-    {
-      id: "ecommerce-full",
-      titleEn: "E-Commerce Header with Search & Cart",
-      titleAr: "هيدر متجر إلكتروني مع بحث وسلة وتغيير اللغة",
-      descEn: "Search bar, user actions, cart indicator, and announcement bar",
-      descAr: "شريط بحث تفاعلي مع أيقونة السلة وحساب المستخدم وشريط عروض علوي",
-      badge: "Full E-Commerce",
-      badgeColor: "bg-blue-50 text-blue-600 border-blue-200",
-      features: ["Search Input", "Cart & Account", "Language Switch", "Top Bar"],
-      type: "ecommerce"
-    },
-    {
-      id: "modern-minimal",
-      titleEn: "Modern Minimalist Header",
-      titleAr: "هيدر عصري مبسط (Minimalist)",
-      descEn: "Clean floating layout focusing on brand, essential links and CTA",
-      descAr: "تصميم نظيف ومبسط يركز على هوية البراند والروابط الأساسية وزر التحويل",
-      badge: "SaaS & Minimal",
-      badgeColor: "bg-emerald-50 text-emerald-600 border-emerald-200",
-      features: ["Minimalist Layout", "Floating Glass Effect", "High Conversion CTA"],
-      type: "minimal"
-    }
-  ],
-
-  hero: [
-    {
-      id: "hero-split-image",
-      titleEn: "Split Hero with Product Mockup",
-      titleAr: "واجهة رئيسية مقسمة مع صورة المنتج",
-      descEn: "Bold title, subtitle, dual CTA buttons, and high-impact product imagery",
-      descAr: "عنوان جذاب مع زرين إجراء وصورة استعراضية بارزة للمنتج على الجانب",
-      badge: "High Conversion",
-      badgeColor: "bg-violet-50 text-violet-600 border-violet-200",
-      features: ["Dual Action Buttons", "Side Image Showcase", "Trust Badges"],
-      type: "split"
-    },
-    {
-      id: "hero-centered-banner",
-      titleEn: "Centered Bold Banner with Video CTA",
-      titleAr: "عنوان في المنتصف مع فيديو توضيحي",
-      descEn: "Centered impactful typography with video preview button and newsletter input",
-      descAr: "تركيز كامل على العنوان في المنتصف مع زر تشغيل فيديو ومعاينة سريعة",
-      badge: "Storytelling",
-      badgeColor: "bg-amber-50 text-amber-600 border-amber-200",
-      features: ["Centered Typography", "Watch Demo Button", "Customer Avatars"],
-      type: "centered"
-    },
-    {
-      id: "hero-gradient-overlay",
-      titleEn: "Full Background Cover with Floating Card",
-      titleAr: "خلفية غلاف كاملة مع بطاقة تفاعلية عائمة",
-      descEn: "Full-width background image with stylish dark gradient and floating feature cards",
-      descAr: "خلفية كاملة مع تدرج لوني وبطاقات عائمة لمميزات المتجر",
-      badge: "Modern Showcase",
-      badgeColor: "bg-blue-50 text-blue-600 border-blue-200",
-      features: ["Full Height Cover", "Floating Stats", "Newsletter Subscription"],
-      type: "overlay"
-    }
-  ],
-
-  announcement: [
-    {
-      id: "announcement-ticker",
-      titleEn: "Animated Marquee / Scrolling Ticker",
-      titleAr: "شريط متحرك مستمر (Ticker / Marquee)",
-      descEn: "Smooth scrolling news and promotions ticker across top screen",
-      descAr: "نص متحرك سلس ومستمر لشد انتباه الزائر للخصومات العاجلة",
-      badge: "Dynamic Ticker",
-      badgeColor: "bg-rose-50 text-rose-600 border-rose-200",
-      features: ["Marquee Animation", "Clickable Promo Code", "Urgency Badge"],
-      type: "ticker"
-    },
-    {
-      id: "announcement-countdown",
-      titleEn: "Countdown Timer Banner",
-      titleAr: "شريط بعداد تنازلي للعروض المؤقتة",
-      descEn: "Promotional banner featuring live countdown timer for flash sales",
-      descAr: "شريط مزود بعداد تنازلي للساعات والدقائق لتحفيز الشراء السريع",
-      badge: "Flash Sale",
-      badgeColor: "bg-amber-50 text-amber-600 border-amber-200",
-      features: ["Countdown Clock", "Urgency CTA", "Discount Voucher"],
-      type: "countdown"
-    }
-  ],
-
-  testimonials: [
-    {
-      id: "testi-cards-grid",
-      titleEn: "Modern 3-Column Review Cards",
-      titleAr: "بطاقات تقييمات ثلاثية الأعمدة",
-      descEn: "Star ratings, client avatars, verified buyer badges, and glowing testimonials",
-      descAr: "بطاقات أنيقة تحتوي على النجوم الخمسة، صورة العميل، وشارة عميل موثق",
-      badge: "Social Proof",
-      badgeColor: "bg-amber-50 text-amber-600 border-amber-200",
-      features: ["5-Star Ratings", "Verified Buyer Tag", "Avatar & Role"],
-      type: "cards"
-    },
-    {
-      id: "testi-slider-quote",
-      titleEn: "Featured Large Quote Slider",
-      titleAr: "اقتباس عريض فاخر مع مؤشر تمرير",
-      descEn: "Large prominent client endorsement with company logo and metrics",
-      descAr: "اقتباس عريض وبارز مع شعار الشركة وإحصائية النتائج المحققة",
-      badge: "Executive Endorsement",
-      badgeColor: "bg-indigo-50 text-indigo-600 border-indigo-200",
-      features: ["Prominent Quote Icon", "Company Logo", "Metric Highlight"],
-      type: "quote"
-    }
-  ],
-
-  info: [
-    {
-      id: "info-story",
-      titleEn: "Brand Story & Feature Showcase",
-      titleAr: "قصة العلامة التجارية واستعراض المميزات",
-      descEn: "Engaging about section with mission statement, cover image, and CTA",
-      descAr: "قسم تعريفي جذاب يشمل الرؤية والصورة التوضيحية وزر اتخاذ إجراء",
-      badge: "Brand Identity",
-      badgeColor: "bg-emerald-50 text-emerald-600 border-emerald-200",
-      features: ["Main Heading", "Rich Description", "Cover Image", "CTA Button"],
-      type: "info"
-    }
-  ],
-
-  info2: [
-    {
-      id: "info2-values",
-      titleEn: "Core Values & Key Advantages",
-      titleAr: "القيم الجوهرية والمزايا التنافسية",
-      descEn: "Highlight what sets your store apart with distinctive layout and visual elements",
-      descAr: "إبراز ما يميز متجرك بتنسيق بصري عصري وعناصر توضيحية بارزة",
-      badge: "Competitive Edge",
-      badgeColor: "bg-cyan-50 text-cyan-600 border-cyan-200",
-      features: ["Secondary Heading", "Feature Highlights", "Highlight Media", "Action Link"],
-      type: "info2"
-    }
-  ],
-
-  contact: [
-    {
-      id: "contact-split-map",
-      titleEn: "Interactive Form with Direct Contacts",
-      titleAr: "نموذج اتصال مع معلومات الاتصال المباشرة",
-      descEn: "Clean contact form alongside phone, email, WhatsApp, and location cards",
-      descAr: "نموذج إرسال رسالة مع بطاقات مباشرة للواتساب والهاتف وساعات العمل",
-      badge: "Direct Connect",
-      badgeColor: "bg-pink-50 text-pink-600 border-pink-200",
-      features: ["Quick Inquiry Form", "WhatsApp Link", "Google Maps Ready"],
-      type: "form"
-    }
-  ],
-
-  footer: [
-    {
-      id: "footer-multi-col",
-      titleEn: "Multi-Column E-Commerce Footer",
-      titleAr: "فوتر متعدد الأعمدة مع نشرة بريدية وروابط دفع",
-      descEn: "Categorized links, newsletter input, payment badges, and social links",
-      descAr: "روابط مصنفة، اشتراك بالنشرة البريدية، أيقونات الدفع، وشبكات التواصل",
-      badge: "Complete Footer",
-      badgeColor: "bg-slate-100 text-slate-700 border-slate-300",
-      features: ["Newsletter Form", "Payment Provider Icons", "Copyright & Socials"],
-      type: "multi"
-    }
-  ]
-};
-
-const RESTAURANT_SECTION_LABELS = {
-  announcement: { en: "Restaurant Announcement", ar: "إعلان المطعم" },
-  header: { en: "Restaurant Header", ar: "هيدر المطعم" },
-  hero: { en: "Restaurant Hero", ar: "واجهة المطعم" },
-  info: { en: "Restaurant Story", ar: "قصتنا" },
-  info2: { en: "Foods Menu", ar: "قائمة الطعام" },
-  testimonials: { en: "Happy Visitors", ar: "آراء الزوار" },
-  contact: { en: "Reserve Your Table", ar: "احجزي طاولتك" },
-  footer: { en: "Restaurant Footer", ar: "تذييل المطعم" },
-};
-
-// Sub-component to render interactive preview of different section types
-function SectionPreviewCanvas({ section, item, variant, isRtl }) {
-  const [rotatingLink, setRotatingLink] = useState(null);
-
-  if (section === "header") {
-    const isGymHeader = item.brandName === GYM_PRESETS.header.match.brandName;
-    const isRestaurantHeader = item.brandName === RESTAURANT_PRESETS.header.match.brandName;
-    const isInteractiveHeader = isGymHeader || isRestaurantHeader;
-
-    return (
-      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-        {isGymHeader && (
-          <div className="flex items-center justify-end gap-4 bg-[#07090b] px-5 py-2 text-[10px] text-white">
-            <span className="italic text-slate-300">Follow Us On</span>
-            <span className="h-px w-8 bg-slate-700" />
-            <span aria-label="Facebook">f</span>
-            <span aria-label="YouTube">YouTube</span>
-            <span aria-label="Instagram">Instagram</span>
-          </div>
-        )}
-        {/* Browser Top Bar */}
-        {!isGymHeader && <div className="flex items-center justify-between border-b border-slate-100 bg-slate-100/70 px-3.5 py-2">
-          <div className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-rose-400" />
-            <span className="h-2 w-2 rounded-full bg-amber-400" />
-            <span className="h-2 w-2 rounded-full bg-emerald-400" />
-            <span className="ms-2 text-[9px] font-mono text-slate-400">wegostores.com/nav</span>
-          </div>
-          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{variant.badge}</span>
-        </div>}
-
-        {/* Top Banner if variant has it */}
-        {(variant.type === "announcement" || variant.type === "ecommerce") && (
-          <div className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-1.5 text-center text-[10px] font-bold text-white">
-            <Megaphone className="h-3 w-3 shrink-0 text-amber-300 animate-bounce" />
-            <span>{isRtl ? "🎉 خصم 25% على جميع المنتجات! كود: WEGO25" : "🎉 Flash Sale: 25% OFF with code WEGO25"}</span>
-          </div>
-        )}
-
-        {/* Header Bar */}
-        <div
-          className={`relative flex items-center justify-between px-4 py-3.5 transition-all ${isGymHeader ? "min-h-16 ps-40" : isRestaurantHeader ? "min-h-16" : ""}`}
-          style={{ backgroundColor: item.bgColor || "#ffffff", color: item.textColor || "#0f172a" }}
-        >
-          {/* Logo & Brand */}
-          <div className={`flex items-center gap-2 ${isGymHeader ? "group absolute start-5 -top-8 z-10 h-24 w-36 flex-col justify-center bg-white text-slate-950 shadow-sm" : isRestaurantHeader ? "group" : ""}`}>
-            {item.logo ? (
-              <img
-                src={/^(https?:|blob:)/.test(item.logo) ? item.logo : `${import.meta.env.VITE_API_URL || ""}${item.logo}`}
-                alt=""
-                className={isGymHeader ? "h-11 w-11 object-contain transition-transform duration-700 group-hover:rotate-[360deg]" : "h-7 w-7 rounded-lg object-contain"}
-              />
-            ) : (
-              <div
-                className={`flex items-center justify-center text-xs font-black ${isGymHeader ? "h-11 w-11 text-slate-950" : "h-8 w-8 rounded-lg bg-blue-500/10"}`}
-                style={!isGymHeader ? { color: item.textColor || "#3b82f6" } : undefined}
-              >
-                {isGymHeader ? <Dumbbell className="h-9 w-9 transition-transform duration-700 group-hover:rotate-[360deg]" /> : isRestaurantHeader ? <UtensilsCrossed className="h-5 w-5 transition-transform duration-700 group-hover:rotate-[360deg]" /> : (item.brandName || "W")[0].toUpperCase()}
-              </div>
-            )}
-            <span className="text-sm font-extrabold tracking-tight">{item.brandName || "Brand"}</span>
-          </div>
-
-          {/* Center Links or Search */}
-          {variant.type === "ecommerce" ? (
-            <div className="hidden sm:flex items-center gap-2 rounded-xl bg-slate-100/90 px-3 py-1.5 text-xs text-slate-400">
-              <Search className="h-3.5 w-3.5 text-slate-400" />
-              <span className="text-[11px] font-medium">{isRtl ? "ابحث عن المنتجات..." : "Search items..."}</span>
-            </div>
-          ) : (
-            <div className={`${isInteractiveHeader ? "flex" : "hidden sm:flex"} min-w-0 items-center gap-3.5 whitespace-nowrap text-[11px] font-semibold opacity-85 ${isGymHeader ? "ms-8 flex-1 justify-center overflow-x-auto scrollbar-none" : isRestaurantHeader ? "ms-6 flex-1 justify-center overflow-x-auto scrollbar-none" : ""}`}>
-              {item.links && item.links.length > 0 ? (
-                item.links.slice(0, isInteractiveHeader ? 7 : 3).map((l, i) => (
-                  isInteractiveHeader ? (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setRotatingLink(i)}
-                      onAnimationEnd={() => setRotatingLink(null)}
-                      className={`shrink-0 rounded-sm transition-colors ${isGymHeader ? "hover:text-[#14e89a]" : "hover:text-[#c15d34]"} ${rotatingLink === i ? "animate-[spin_0.55s_ease-in-out]" : ""}`}
-                    >
-                      {l.label}
-                    </button>
-                  ) : (
-                    <span key={i}>{l.label}</span>
-                  )
-                ))
-              ) : (
-                <><span>Home</span><span>Store</span><span>About</span></>
-              )}
-            </div>
-          )}
-
-          {/* Right Action Icons */}
-          <div className="flex items-center gap-2">
-            {variant.type === "lang-theme" && (
-              <>
-                <div className="flex items-center gap-1 rounded-lg border border-slate-200/80 bg-white/80 px-2 py-1 text-[10px] font-bold text-slate-700 shadow-xs">
-                  <Globe className="h-3 w-3 text-slate-500" />
-                  <span>{isRtl ? "AR" : "EN"}</span>
-                </div>
-                <div className="flex items-center justify-center rounded-lg border border-slate-200/80 bg-white/80 p-1.5 text-slate-700 shadow-xs">
-                  <Moon className="h-3 w-3 text-indigo-500" />
-                </div>
-              </>
-            )}
-
-            {variant.type === "ecommerce" && (
-              <div className="relative flex items-center justify-center rounded-lg border border-slate-200/80 bg-white/80 p-1.5 text-slate-700">
-                <ShoppingCart className="h-3 w-3" />
-                <span className="absolute -top-1 -end-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-rose-500 text-[8px] font-bold text-white">2</span>
-              </div>
-            )}
-
-            <span
-              className="px-3 py-2 text-[10px] font-bold shadow-xs"
-              style={isGymHeader
-                ? { background: "#14e89a", color: "#07110d" }
-                : isRestaurantHeader
-                  ? { background: "#c15d34", color: "#ffffff" }
-                  : { background: item.textColor || "#0f172a", color: item.bgColor || "#ffffff" }}
-            >
-              {isGymHeader ? "Get Your Free Pass  →" : isRestaurantHeader ? "Reserve Your Table  →" : isRtl ? "ابدأ" : "Start"}
-            </span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (section === "hero") {
-    const isRestaurantHero = item.title === RESTAURANT_PRESETS.hero.match.title;
-    const heroImg = item.image
-      ? /^(https?:|blob:)/.test(item.image) ? item.image : `${import.meta.env.VITE_API_URL || ""}${item.image}`
-      : isRestaurantHero
-        ? "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&auto=format&fit=crop&q=80"
-        : "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&auto=format&fit=crop&q=80";
-
-    return (
-      <div className={`overflow-hidden rounded-2xl border border-slate-200/80 text-white shadow-sm ${isRestaurantHero ? "bg-[#242522]" : "bg-slate-900"}`}>
-        {variant.type === "split" || variant.type === "restaurant" ? (
-          <div className={`grid grid-cols-1 sm:grid-cols-2 items-center gap-4 p-6 ${isRestaurantHero ? "bg-[#242522]" : "bg-gradient-to-br from-slate-900 to-slate-800"}`}>
-            <div className="space-y-3">
-              <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold border ${isRestaurantHero ? "border-[#c15d34]/40 bg-[#c15d34]/15 text-[#f0a282]" : "border-blue-500/30 bg-blue-500/20 text-blue-400"}`}>
-                <Sparkles className="h-2.5 w-2.5" />
-                {isRestaurantHero ? isRtl ? "طازج يوميًا" : "FRESH EVERY DAY" : isRtl ? "نسخة احترافية جديدة" : "Next Gen Experience"}
-              </span>
-              <h4 className="text-sm sm:text-base font-extrabold leading-tight text-white line-clamp-2">
-                {item.title || (isRtl ? "ارتقِ بمتجرك إلى المستوى التالي" : "Supercharge Your Modern Online Store")}
-              </h4>
-              <p className="text-xs text-slate-300 line-clamp-2">
-                {item.subtitle || (isRtl ? "منصة متكاملة لتصميم وإدارة متجرك بأعلى كفاءة وسرعة" : "The complete all-in-one storefront solution built for conversion")}
-              </p>
-              <div className="flex items-center gap-2 pt-1">
-                <span className={`rounded-xl px-3 py-1.5 text-[11px] font-bold text-white shadow-md ${isRestaurantHero ? "bg-[#c15d34]" : "bg-blue-600"}`}>
-                  {item.ctaText || (isRtl ? "ابدأ الآن مجاناً" : "Get Started Free")}
-                </span>
-                <span className="rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-1.5 text-[11px] font-bold text-slate-300">
-                  {isRtl ? "استكشف العرض" : "Live Demo"}
-                </span>
-              </div>
-            </div>
-
-            <div className="relative overflow-hidden rounded-xl border border-slate-700/60 shadow-lg">
-              <img src={heroImg} alt="" className="h-32 w-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent flex items-end p-2.5">
-                <span className="text-[10px] font-bold text-slate-200">✨ Live Storefront Mockup</span>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="p-8 text-center bg-gradient-to-b from-indigo-950 via-slate-900 to-slate-900">
-            <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/20 px-3 py-1 text-[10px] font-bold text-purple-300 border border-purple-500/30 mb-3">
-              🚀 {isRtl ? "إطلاق جديد وحصري" : "Exclusive New Release"}
-            </span>
-            <h4 className="text-base sm:text-lg font-black text-white max-w-md mx-auto leading-snug">
-              {item.title || (isRtl ? "التصميم الأقوى لتحقيق أعلى مبيعات" : "Build Fast, Convert Better & Grow Faster")}
-            </h4>
-            <p className="mt-2 text-xs text-slate-300 max-w-sm mx-auto line-clamp-2">
-              {item.subtitle || (isRtl ? "تجربة تسوق فريدة ومريحة لعملائك تزيد معدل التحويل" : "Deliver seamless shopping experiences designed to convert")}
-            </p>
-            <div className="mt-4 flex items-center justify-center gap-2">
-              <span className="rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-lg">
-                {item.ctaText || (isRtl ? "ابدأ تجربتك المجانية" : "Start Free Trial")}
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-xs font-bold text-slate-300">
-                <Play className="h-3 w-3 fill-slate-300" />
-                {isRtl ? "فيديو الشرح" : "Watch Demo"}
-              </span>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  if (section === "announcement") {
-    return (
-      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
-        <div
-          className="flex items-center justify-between rounded-xl px-4 py-3 shadow-inner"
-          style={{
-            backgroundColor: item.bgColor || "#ef4444",
-            color: item.textColor || "#ffffff"
-          }}
-        >
-          <div className="flex items-center gap-2 font-bold text-xs">
-            <Megaphone className="h-4 w-4 shrink-0 animate-bounce" />
-            <span>{item.text || (isRtl ? "عروض حصرية لفترة محدودة لجميع العملاء الجدد!" : "Limited Time Offer! 20% off all new collections")}</span>
-          </div>
-
-          {variant.type === "countdown" ? (
-            <div className="flex items-center gap-1.5 text-[10px] font-mono bg-black/20 px-2 py-1 rounded-md">
-              <span className="font-bold">02:14:45</span>
-            </div>
-          ) : (
-            <span className="rounded bg-white/25 px-2 py-0.5 text-[10px] font-bold">
-              {isRtl ? "تسوق الآن" : "Shop Now"}
-            </span>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  if (section === "testimonials") {
-    const isRestaurant = item.heading === RESTAURANT_PRESETS.testimonials.match.heading;
-    const clientName = item.clientName || (isRestaurant ? "Restaurant Guest" : isRtl ? "سارة أحمد" : "Sarah Anderson");
-    const clientRole = item.clientRole || (isRestaurant ? "Guest" : isRtl ? "مشتري موثق" : "Verified Buyer");
-    const feedback = item.feedback || (isRestaurant
-      ? "A relaxed atmosphere, thoughtful service, and a meal worth coming back for."
-      : isRtl
-        ? "أفضل متجر تعاملت معه على الإطلاق، سرعة في التوصيل وجودة فاخرة للمنتجات!"
-        : "Outstanding shopping experience, ultra-fast shipping and supreme product quality!");
-
-    return (
-      <div className={`overflow-hidden rounded-2xl border border-slate-200/80 p-5 shadow-sm ${isRestaurant ? "bg-[#f6f1e8]" : "bg-slate-50/50"}`}>
-        <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-1 text-amber-400">
-              {[1, 2, 3, 4, 5].map((s) => (
-                <Star key={s} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-              ))}
-            </div>
-            <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-              <CheckCircle2 className="h-2.5 w-2.5" />
-              {clientRole}
-            </span>
-          </div>
-          <p className="text-xs italic text-slate-700 leading-relaxed">
-            "{feedback}"
-          </p>
-          <div className="mt-3 flex items-center gap-2 pt-2 border-t border-slate-100">
-            <div className={`h-7 w-7 rounded-full text-white flex items-center justify-center font-bold text-[10px] ${isRestaurant ? "bg-[#c15d34]" : "bg-gradient-to-tr from-blue-500 to-indigo-500"}`}>
-              {clientName.slice(0, 2).toUpperCase()}
-            </div>
-            <div>
-              <p className="text-xs font-bold text-slate-900">{clientName}</p>
-              <p className="text-[10px] text-slate-400">{clientRole}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (section === "contact") {
-    const isRestaurant = item.heading === RESTAURANT_PRESETS.contact.match.heading;
-
-    return (
-      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
-        <div className={`flex flex-col sm:flex-row items-center justify-between gap-3 rounded-xl border p-3.5 ${isRestaurant ? "border-[#c15d34]/20 bg-[#f6f1e8]" : "border-pink-100 bg-pink-50/50"}`}>
-          <div className="flex items-center gap-2.5">
-            <div className={`flex h-8 w-8 items-center justify-center rounded-lg text-white font-bold text-xs ${isRestaurant ? "bg-[#c15d34]" : "bg-pink-500"}`}>
-              {isRestaurant ? <UtensilsCrossed className="h-4 w-4" /> : <Mail className="h-4 w-4" />}
-            </div>
-            <div>
-              <p className="text-xs font-bold text-slate-900">{item.heading || (isRtl ? "تواصل معنا" : "Contact Us")}</p>
-              <p className="text-[10px] text-slate-500">{item.phone || item.email || (isRtl ? "الهاتف والبريد والدعم" : "Phone & Email")}</p>
-            </div>
-          </div>
-          <span className={`rounded-lg px-2.5 py-1 text-[10px] font-bold text-white shadow-xs ${isRestaurant ? "bg-[#c15d34]" : "bg-pink-600"}`}>
-            {item.submitText || (isRtl ? "إرسال" : "Submit")}
-          </span>
-        </div>
-      </div>
-    );
-  }
-
-  if (section === "footer") {
-    const isRestaurant = item.copyright === RESTAURANT_PRESETS.footer.match.copyright;
-    const links = Array.isArray(item.links) ? item.links : [];
-    return (
-      <div className={`overflow-hidden rounded-2xl border border-slate-200/80 p-4 text-white shadow-sm ${isRestaurant ? "bg-[#242522]" : "bg-slate-900"}`}>
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-          <span className="font-extrabold tracking-tight">{isRestaurant ? "Restaurant" : "Wegz Store"}</span>
-          <div className="flex gap-3 text-[10px] text-slate-300">
-            {links.length > 0 ? (
-              links.slice(0, 3).map((l, i) => <span key={i}>{l.label}</span>)
-            ) : (
-              <><span>Home</span><span>Privacy</span><span>Terms</span></>
-            )}
-          </div>
-          <span className="text-[9px] text-slate-400">{item.copyright || "© 2026 Wegz"}</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (section === "info" || section === "info2") {
-    const isRestaurant = item.heading === RESTAURANT_PRESETS.info.match.heading || item.heading === RESTAURANT_PRESETS.info2.match.heading;
-    return (
-      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
-        <div className={`flex items-center justify-between gap-3 rounded-xl border p-3.5 ${isRestaurant ? "border-[#c15d34]/20 bg-[#f6f1e8]" : "border-emerald-100 bg-emerald-50/40"}`}>
-          <div className="space-y-1">
-            <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${isRestaurant ? "bg-[#c15d34]/10 text-[#9b4729]" : "bg-emerald-100 text-emerald-700"}`}>
-              {isRestaurant ? section === "info" ? "OUR STORY" : "FOOD MENU" : section === "info" ? "INFO 1" : "INFO 2"}
-            </span>
-            <h4 className="text-xs font-bold text-slate-900">{item.heading || item.title || (isRtl ? "معلومات عنا" : "About Us")}</h4>
-            <p className="text-[10px] text-slate-500 line-clamp-1">{item.subheading || item.paragraph || (isRtl ? "وصف ومحتوى تعريفي" : "Story & details")}</p>
-          </div>
-          {!isRestaurant && (
-            <span className="shrink-0 rounded-lg bg-emerald-600 px-2.5 py-1 text-[10px] font-bold text-white shadow-xs">
-              {item.ctaText || (isRtl ? "المزيد" : "More")}
-            </span>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // Fallback visual simulation for any other sections
-  return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 font-bold">
-          <CheckCircle2 className="h-5 w-5" />
-        </div>
-        <div>
-          <h4 className="text-xs font-extrabold text-slate-900">{item.heading || item.brandName || item.title || "Custom Preset"}</h4>
-          <p className="text-[11px] text-slate-400">Active layout configured with responsive options</p>
-        </div>
-      </div>
-    </div>
-  );
-}
+import { SECTION_MAP, DESIGNS, DESIGN_KEYS, resolveVariant } from "./sectionsConfig";
+import SectionDesignPreview from "./DesignPreview";
 
 export default function SectionSelect() {
   const { section } = useParams();
-  const navigate = useNavigate();
   const lang = useSelector((s) => s.ui.lang) === "ar" ? "ar" : "en";
   const isRtl = lang === "ar";
   const cfg = SECTION_MAP[section];
@@ -601,7 +33,17 @@ export default function SectionSelect() {
     if (data.data && typeof data.data === "object") return [data.data];
     return [];
   }, [data]);
-  const templates = SECTION_TEMPLATES[section] || SECTION_TEMPLATES.header;
+
+  // ترتيب ثابت: business → corporate → corporate-red → construction
+  const sorted = useMemo(
+    () =>
+      [...records].sort(
+        (a, b) =>
+          DESIGN_KEYS.indexOf(resolveVariant(section, a)) -
+          DESIGN_KEYS.indexOf(resolveVariant(section, b))
+      ),
+    [records, section]
+  );
 
   const handleSetActive = async (record) => {
     if (record.isVisible) return;
@@ -609,7 +51,7 @@ export default function SectionSelect() {
       isVisible: true,
     });
     if (res.success) {
-      toast.success(isRtl ? "تم تفعيل هذا التصميم في الموقع بنجاح" : "Preset selected and activated successfully");
+      toast.success(isRtl ? "تم تفعيل هذا التصميم في الموقع بنجاح" : "Design activated successfully");
       refetch();
     } else {
       toast.error(res.error || (isRtl ? "فشل التفعيل" : "Activation failed"));
@@ -626,50 +68,31 @@ export default function SectionSelect() {
 
   return (
     <div dir={isRtl ? "rtl" : "ltr"} className="min-h-screen bg-[#F8FAFC]">
-      {/* Top Navbar Header */}
       <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
-            <Link
-              to="/admin/website/dashboard"
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/80 bg-white text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
-            >
-              {isRtl ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-            </Link>
-
-            <div>
-              <div className="flex items-center gap-2">
-                <span
-                  className="flex h-7 w-7 items-center justify-center rounded-lg shadow-sm"
-                  style={{ background: `${cfg.color}15`, color: cfg.color }}
-                >
-                  <cfg.icon className="h-4 w-4" />
-                </span>
-                <h1 className="text-base font-bold text-slate-900">
-                  {isRtl ? `نماذج وتصاميم ${cfg.title.ar}` : `${cfg.title.en} Templates & Styles`}
-                </h1>
-              </div>
-              <p className="text-xs text-slate-500">
-                {isRtl
-                  ? `اختاري الشكل والتصميم المفضل لقسم ${cfg.title.ar}، أو قومي بتعديل إعداداته`
-                  : `Select preferred layout style for ${cfg.title.en}, or customize settings`}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              to={`/admin/website/${section}/add`}
-              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm shadow-blue-500/20 transition hover:bg-blue-700 active:scale-95"
-            >
-              <Plus className="h-4 w-4" />
-              <span>{isRtl ? "إضافة نسخة جديدة" : "Add New Preset"}</span>
-            </Link>
+        <div className="mx-auto flex max-w-7xl items-center gap-3 px-6 py-4">
+          <Link
+            to="/admin/website/dashboard"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/80 bg-white text-slate-600 transition hover:bg-slate-50"
+          >
+            {isRtl ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </Link>
+          <span
+            className="flex h-8 w-8 items-center justify-center rounded-lg"
+            style={{ background: `${cfg.color}15`, color: cfg.color }}
+          >
+            <cfg.icon className="h-4 w-4" />
+          </span>
+          <div>
+            <h1 className="text-base font-bold text-slate-900">
+              {isRtl ? `تصاميم ${cfg.title.ar}` : `${cfg.title.en} Designs`}
+            </h1>
+            <p className="text-xs text-slate-500">
+              {isRtl ? "اختاري التصميم المعروض في الموقع" : "Pick the design shown on your site"}
+            </p>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="mx-auto max-w-7xl px-6 py-10">
         {loading ? (
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
@@ -681,171 +104,89 @@ export default function SectionSelect() {
           <div className="rounded-3xl border border-rose-200 bg-rose-50/50 p-8 text-center text-sm font-semibold text-rose-600">
             {error}
           </div>
-        ) : records.length === 0 ? (
+        ) : sorted.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center">
             <Layers className="mx-auto h-12 w-12 text-slate-300" />
             <h3 className="mt-4 text-base font-bold text-slate-800">
-              {isRtl ? "لا توجد نسخ مضافة حتى الآن" : "No presets found"}
+              {isRtl ? "مفيش تصاميم لسه" : "No designs yet"}
             </h3>
             <p className="mt-1 text-xs text-slate-500">
-              {isRtl ? "ابدأي بإنشاء أول نسخة لهذا السكشن" : "Start by creating the first design for this section"}
+              {isRtl
+                ? "من استوديو التصميم اضغطي «إعادة ضبط التصاميم» عشان تتعمل الـ 4 تصاميم"
+                : "Use “Reset designs” in Design Studio to create the 4 designs"}
             </p>
-            <Link
-              to={`/admin/website/${section}/add`}
-              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-md transition hover:bg-blue-700"
-            >
-              <Plus className="h-4 w-4" />
-              {isRtl ? "إنشاء نسخة جديدة" : "Create New Preset"}
-            </Link>
           </div>
         ) : (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-sm font-extrabold uppercase tracking-wider text-slate-600">
-                  {isRtl ? `التصاميم والأنماط المعروضة (${records.length})` : `Available Layouts & Designs (${records.length})`}
-                </h2>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  {isRtl
-                    ? "يمكنك تفعيل أي تصميم بنقرة واحدة، أو الضغط على تخصيص لفتح التاب الخاص به"
-                    : "Activate any layout with one click, or customize its specific settings tab"}
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-              {records.map((item, idx) => {
-                const isActive = item.isVisible;
-                const gymPreset = GYM_PRESETS[section];
-                const isGymPreset = gymPreset && Object.entries(gymPreset.match)
-                  .every(([field, value]) => item[field] === value);
-                const restaurantPreset = RESTAURANT_PRESETS[section];
-                const isRestaurantPreset = restaurantPreset && Object.entries(restaurantPreset.match)
-                  .every(([field, value]) => item[field] === value);
-                const variant = isGymPreset
-                  ? {
-                      titleEn: `GYM ${cfg.title.en}`,
-                      titleAr: `GYM - ${cfg.title.ar}`,
-                      descEn: "Gym section preset based on the reference theme.",
-                      descAr: "نسخة الجيم للقسم حسب التصميم المرجعي.",
-                      badge: "GYM",
-                      badgeColor: "bg-lime-50 text-lime-700 border-lime-200",
-                      features: ["GYM", "Gym Theme"],
-                      type: "gym",
-                    }
-                  : isRestaurantPreset
-                    ? {
-                        titleEn: RESTAURANT_SECTION_LABELS[section].en,
-                        titleAr: RESTAURANT_SECTION_LABELS[section].ar,
-                        descEn: "Restaurant section preset using the existing section fields.",
-                        descAr: "نسخة مطعم مبنية على الحقول المدعومة للقسم.",
-                        badge: "Restaurant",
-                        badgeColor: "bg-orange-50 text-orange-800 border-orange-200",
-                        features: section === "info2"
-                          ? ["Starters", "Salads", "Soups", "Main Dishes"]
-                          : ["Restaurant", "Theme Preset"],
-                        type: "restaurant",
-                      }
-                  : templates[idx % templates.length] || templates[0];
-
-                return (
-                  <div
-                    key={item._id}
-                    className={`group relative flex flex-col justify-between overflow-hidden rounded-3xl border bg-white shadow-sm transition-all duration-300 hover:shadow-xl ${
-                      isActive
-                        ? "border-emerald-500/80 ring-2 ring-emerald-500/20 shadow-emerald-500/5"
-                        : "border-slate-200/90 hover:border-blue-400"
-                    }`}
-                  >
-                    {/* Active Live Badge */}
-                    {isActive && (
-                      <div className="absolute top-4 start-4 z-20 flex items-center gap-1.5 rounded-full bg-emerald-500 px-3 py-1 text-[11px] font-bold text-white shadow-md">
-                        <span className="h-2 w-2 rounded-full bg-white animate-pulse" />
-                        <span>{isRtl ? "المفعل حالياً في الموقع" : "Currently Live"}</span>
-                      </div>
-                    )}
-
-                    {/* Preview Mock Canvas */}
-                    <div className="relative border-b border-slate-100 bg-slate-50/70 p-5 sm:p-6">
-                      <SectionPreviewCanvas
-                        section={section}
-                        item={item}
-                        variant={variant}
-                        isRtl={isRtl}
-                      />
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+            {sorted.map((item) => {
+              const d = DESIGNS[resolveVariant(section, item)];
+              const isActive = item.isVisible;
+              return (
+                <div
+                  key={item._id}
+                  className={`group relative flex flex-col overflow-hidden rounded-3xl border bg-white shadow-sm transition-all duration-300 hover:shadow-xl ${
+                    isActive
+                      ? "border-emerald-500/80 ring-2 ring-emerald-500/20"
+                      : "border-slate-200/90 hover:border-blue-400"
+                  }`}
+                >
+                  {isActive && (
+                    <div className="absolute start-4 top-4 z-20 flex items-center gap-1.5 rounded-full bg-emerald-500 px-3 py-1 text-[11px] font-bold text-white shadow-md">
+                      <span className="h-2 w-2 animate-pulse rounded-full bg-white" />
+                      {isRtl ? "المفعل حالياً" : "Currently Live"}
                     </div>
+                  )}
 
-                    {/* Template Card Details */}
-                    <div className="p-6">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h3 className="text-base font-extrabold text-slate-900">
-                              {item.brandName || item.title || (isRtl ? variant.titleAr : variant.titleEn)}
-                            </h3>
-                            <span className={`rounded-md border px-2 py-0.5 text-[10px] font-bold ${variant.badgeColor}`}>
-                              {variant.badge}
-                            </span>
-                          </div>
-                          <p className="mt-1 text-xs text-slate-500">
-                            {isRtl ? variant.descAr : variant.descEn}
-                          </p>
-                        </div>
-                      </div>
+                  <div className="border-b border-slate-100 bg-slate-50/70 p-5">
+                    <SectionDesignPreview section={section} form={item} isRtl={isRtl} />
+                  </div>
 
-                      {/* Feature Pills */}
-                      <div className="mt-4 flex flex-wrap items-center gap-1.5">
-                        {variant.features.map((feat, fidx) => (
-                          <span
-                            key={fidx}
-                            className="inline-flex items-center gap-1 rounded-lg bg-slate-50 border border-slate-200/70 px-2 py-1 text-[10px] font-semibold text-slate-600"
-                          >
-                            <span className="h-1 w-1 rounded-full bg-blue-500" />
-                            {feat}
-                          </span>
+                  <div className="p-6">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-base font-extrabold text-slate-900">{d.name[lang]}</h3>
+                      <span className="flex gap-1">
+                        {[d.bg, d.accent, d.alt].map((c, i) => (
+                          <span key={i} className="h-3 w-3 rounded-full border border-slate-200" style={{ background: c }} />
                         ))}
-                      </div>
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-slate-500">{d.desc[lang]}</p>
 
-                      {/* Card Action Buttons */}
-                      <div className="mt-6 flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
-                        {/* Direct Customize Button (Navigates directly to this preset's tab) */}
-                        <Link
-                          to={`/admin/website/${section}/settings?id=${item._id}`}
-                          className="inline-flex items-center gap-2 rounded-xl border border-slate-200/90 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-blue-600 active:scale-95"
-                        >
-                          <SlidersHorizontal className="h-4 w-4" />
-                          <span>{isRtl ? "تخصيص وإعدادات" : "Customize"}</span>
-                        </Link>
-
-                        {/* Set Active Button */}
-                        <button
-                          type="button"
-                          onClick={() => handleSetActive(item)}
-                          disabled={isActive || activating}
-                          className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition active:scale-95 ${
-                            isActive
-                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200/60 cursor-default"
-                              : "bg-slate-900 text-white shadow-md shadow-slate-900/10 hover:bg-blue-600"
-                          }`}
-                        >
-                          {isActive ? (
-                            <>
-                              <Check className="h-4 w-4 text-emerald-600" />
-                              <span>{isRtl ? "التصميم المعتمد" : "Current Active"}</span>
-                            </>
-                          ) : (
-                            <>
-                              <span>{isRtl ? "اختيار هذا التصميم" : "Select & Activate"}</span>
-                              {isRtl ? <ArrowLeft className="h-3.5 w-3.5" /> : <ArrowRight className="h-3.5 w-3.5" />}
-                            </>
-                          )}
-                        </button>
-                      </div>
+                    <div className="mt-6 flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
+                      <Link
+                        to={`/admin/website/${section}/settings?id=${item._id}`}
+                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200/90 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:text-blue-600 active:scale-95"
+                      >
+                        <SlidersHorizontal className="h-4 w-4" />
+                        {isRtl ? "تخصيص" : "Customize"}
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => handleSetActive(item)}
+                        disabled={isActive || activating}
+                        className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition active:scale-95 ${
+                          isActive
+                            ? "cursor-default border border-emerald-200/60 bg-emerald-50 text-emerald-700"
+                            : "bg-slate-900 text-white shadow-md hover:bg-blue-600"
+                        }`}
+                      >
+                        {isActive ? (
+                          <>
+                            <Check className="h-4 w-4" />
+                            {isRtl ? "التصميم المعتمد" : "Current Active"}
+                          </>
+                        ) : (
+                          <>
+                            {isRtl ? "اختيار هذا التصميم" : "Select & Activate"}
+                            {isRtl ? <ArrowLeft className="h-3.5 w-3.5" /> : <ArrowRight className="h-3.5 w-3.5" />}
+                          </>
+                        )}
+                      </button>
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </main>
