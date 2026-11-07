@@ -312,7 +312,6 @@ export default function SectionSettings() {
       }
       return;
     }
-    // نختار تلقائيًا بس لو مفيش اختيار صالح (أول فتح أو بعد حذف/إعادة تحميل)
     if (!selectedId || !records.some((r) => r._id === selectedId)) {
       const fromQuery = queryId && records.find((r) => r._id === queryId);
       const active = records.find((r) => r.isVisible);
@@ -322,31 +321,35 @@ export default function SectionSettings() {
 
   const record = records.find((r) => r._id === selectedId) || records[0];
 
-  // السجل + التصميم المستنتج (حتى لو الباك إند مش بيحفظ variant)
   const normRecord = useMemo(
     () => (record ? { ...record, variant: resolveVariant(section, record) } : {}),
     [record, section]
   );
 
   const [form, setForm] = useState({});
+  const [baseline, setBaseline] = useState({}); // آخر نسخة محفوظة
   const [files, setFiles] = useState({});
 
   useEffect(() => {
     setForm(normRecord);
+    setBaseline(normRecord);
     setFiles({});
   }, [record?._id, section]);
 
-  const dirty = useMemo(
-    () =>
-      Object.keys(files).length > 0 ||
-      JSON.stringify(form) !== JSON.stringify(normRecord),
-    [form, files, normRecord]
-  );
+  // ✅ تم تحديث التحقق من التغييرات ليقوم بمقارنة الحقول الفعلية فقط بدقة وتجنب الإنذارات الكاذبة
+  const dirty = useMemo(() => {
+    if (Object.keys(files).length > 0) return true;
+    if (!cfg || !cfg.fields) return false;
+
+    // isVisible بيتغيّر من "تفعيل في الموقع" فقط، فمش بنحسبه كتغيير في الفورم
+    const names = cfg.fields.map((f) => f.name).filter((n) => n !== "isVisible");
+    return names.some((n) => JSON.stringify(form[n] ?? "") !== JSON.stringify(baseline[n] ?? ""));
+  }, [form, files, baseline, cfg]);
 
   if (!cfg) return <div className="p-8 text-slate-600">Section not found</div>;
 
   const discard = () => {
-    setForm(normRecord);
+    setForm(baseline);
     setFiles({});
   };
 
@@ -362,11 +365,14 @@ export default function SectionSettings() {
       );
       refetch();
     } else {
-      toast.error(res.error || (isRtl ? "فشل التفعيل" : "Activation failed"));
+      const errorMsg =
+        typeof res.error === "object"
+          ? res.error?.message || res.error?.error || JSON.stringify(res.error)
+          : res.error;
+      toast.error(errorMsg || (isRtl ? "فشل التفعيل" : "Activation failed"));
     }
   };
 
-  // لو التصميم ده مالوش سجل لسه → نعمله من القالب الجاهز ونفتحه
   const handleCreateDesign = async (key) => {
     const seed = buildSeed(key, false)[section];
     const res = await mutate(`/api/admin/sections/${section}`, "POST", seed);
@@ -376,7 +382,11 @@ export default function SectionSettings() {
       if (doc?._id) setPendingId(doc._id);
       refetch();
     } else {
-      toast.error(res.error || (isRtl ? "فشل الإنشاء" : "Could not create design"));
+      const errorMsg =
+        typeof res.error === "object"
+          ? res.error?.message || res.error?.error || JSON.stringify(res.error)
+          : res.error;
+      toast.error(errorMsg || (isRtl ? "فشل الإنشاء" : "Could not create design"));
     }
   };
 
@@ -394,29 +404,44 @@ export default function SectionSettings() {
       toast.success(isRtl ? "تم الحذف بنجاح" : "Deleted successfully");
       refetch();
     } else {
-      toast.error(res.error || (isRtl ? "فشل الحذف" : "Deletion failed"));
+      const errorMsg =
+        typeof res.error === "object"
+          ? res.error?.message || res.error?.error || JSON.stringify(res.error)
+          : res.error;
+      toast.error(errorMsg || (isRtl ? "فشل الحذف" : "Deletion failed"));
     }
   };
 
   const save = async () => {
-    const names = cfg.fields.map((f) => f.name);
-    let payload = Object.fromEntries(
-      names.filter((n) => !(n in files)).map((n) => [n, form[n]])
-    );
+    const excludedKeys = ["_id", "__v", "isVisible", "createdAt", "updatedAt", "section", "user", "__t"];
+    const formKeys = Object.keys(form).filter((k) => !excludedKeys.includes(k));
+
+    let payload;
     let config = {};
 
-    if (Object.keys(files).length) {
+    if (Object.keys(files).length > 0) {
       const fd = new FormData();
-      names.forEach((n) => {
-        if (files[n]) fd.append(n, files[n]);
-        else if (form[n] !== undefined)
+      formKeys.forEach((n) => {
+        if (files[n]) {
+          fd.append(n, files[n]);
+        } else if (form[n] !== undefined && form[n] !== null) {
           fd.append(
             n,
             typeof form[n] === "object" ? JSON.stringify(form[n]) : form[n]
           );
+        }
+      });
+      Object.keys(files).forEach((n) => {
+        if (!formKeys.includes(n) && files[n]) {
+          fd.append(n, files[n]);
+        }
       });
       payload = fd;
       config = { headers: { "Content-Type": "multipart/form-data" } };
+    } else {
+      payload = Object.fromEntries(
+        formKeys.map((n) => [n, form[n]])
+      );
     }
 
     const url = record
@@ -428,9 +453,21 @@ export default function SectionSettings() {
       toast.success(
         lang === "ar" ? "تم حفظ التغييرات بنجاح" : "Changes saved successfully"
       );
+      // لازم نصفّر files ونحدّث النسخة المحفوظة، وإلا الزرار يفضل "فيه تغييرات"
+      const doc = res.data?.data || res.data;
+      const saved = doc && typeof doc === "object" && doc._id ? doc : {};
+      const next = { ...form, ...saved };
+      next.variant = resolveVariant(section, next);
+      setForm(next);
+      setBaseline(next);
+      setFiles({});
       refetch();
     } else {
-      toast.error(res.error);
+      const errorMsg =
+        typeof res.error === "object"
+          ? res.error?.message || res.error?.error || JSON.stringify(res.error)
+          : res.error;
+      toast.error(errorMsg || (isRtl ? "فشل حفظ التغييرات" : "Failed to save changes"));
     }
   };
 
@@ -450,11 +487,11 @@ export default function SectionSettings() {
           <span className="font-bold text-slate-900">{cfg.title[lang]}</span>
         </div>
 
-        {/* Two-Column Layout */}
+        {/* Two-Column Layout (Using 12-column grid: Form col-span-5, Live Preview col-span-7) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* Form Column */}
-          <div className="lg:col-span-6 xl:col-span-6 space-y-6">
+          <div className="lg:col-span-4 space-y-6">
             <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xl shadow-slate-900/5">
               
               {/* Card Header */}
@@ -523,15 +560,7 @@ export default function SectionSettings() {
                           disabled={saving}
                           onClick={() => {
                             if (r && r._id === selectedId) return;
-                            if (
-                              dirty &&
-                              !window.confirm(
-                                isRtl
-                                  ? "فيه تغييرات غير محفوظة هتضيع لو غيرتي التصميم. تكملي؟"
-                                  : "You have unsaved changes that will be lost. Continue?"
-                              )
-                            )
-                              return;
+
                             if (r) setSelectedId(r._id);
                             else handleCreateDesign(k);
                           }}
@@ -592,7 +621,7 @@ export default function SectionSettings() {
                 </div>
               ) : (
                 <div className="divide-y divide-slate-100">
-                  {cfg.fields.filter((f) => f.name !== "variant").map((f) => (
+                  {cfg.fields.filter((f) => f.name !== "variant" && f.name !== "isVisible").map((f) => (
                     <div
                       key={f.name}
                       className="flex flex-col gap-2.5 px-6 sm:px-8 py-6 transition-colors hover:bg-slate-50/40"
@@ -661,8 +690,8 @@ export default function SectionSettings() {
             </div>
           </div>
 
-          {/* Sticky Live Preview Column */}
-          <div className="lg:col-span-6 xl:col-span-6 sticky top-6 space-y-4">
+          {/* Sticky Live Preview Column (Wider: col-span-7) */}
+          <div className="lg:col-span-8 sticky top-6 space-y-4">
             <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xl shadow-slate-900/5">
               
               {/* Preview Header */}

@@ -56,7 +56,7 @@ export const DESIGN_KEYS = Object.keys(DESIGNS);
 
 export const DESIGN_CONTENT = {
   business: {
-    brand: "XTRA Business",
+    brand: "Business",
     links: ["Home", "About", "Services", "Blog", "Contact"],
     announcement: "Limited time offer — book your free consultation today",
     eyebrow: "We are expert team",
@@ -75,8 +75,8 @@ export const DESIGN_CONTENT = {
     footerDescription: "Products that make life easier & better.",
   },
   corporate: {
-    brand: "XTRA Corporation",
-    links: ["Home", "About", "Services", "FAQ's", "Blog", "Portfolio", "Contact"],
+    brand: "Corporation",
+    links: ["Home", "About", "Services", "", "Blog", "", "Contact"],
     announcement: "Have questions? Call now +1 (818) 23 45 678",
     eyebrow: "Our services",
     heroTitle: "We Plan, We Execute, You Celebrate",
@@ -94,8 +94,8 @@ export const DESIGN_CONTENT = {
     footerDescription: "Advertising technology experts that drive business results.",
   },
   "corporate-red": {
-    brand: "XTRA Corporate",
-    links: ["Home", "Services", "FAQ's", "Blog", "Portfolio", "About Us", "Contact"],
+    brand: "Corporate",
+    links: ["Home", "Services", "", "Blog", "", "About Us", "Contact"],
     announcement: "Hotline 24/7 — +1 (800) 345 678",
     eyebrow: "Hotline 24/7",
     heroTitle: "We Bring Experimental",
@@ -113,7 +113,7 @@ export const DESIGN_CONTENT = {
     footerDescription: "Experimental thinking for real business results.",
   },
   construction: {
-    brand: "XTRA Construction",
+    brand: "Construction",
     links: ["Home", "About", "Services", "FAQ", "Blog", "Contact"],
     announcement: "Have any questions? Call +1 (818) 23 45 678",
     eyebrow: "Since 1998",
@@ -171,10 +171,10 @@ export const designColors = (key, section) => {
 
 export function buildSeed(key, isLive = false) {
   const c = DESIGN_CONTENT[key];
-  const mk = (section, extra) => {
-    const [bgColor, textColor] = designColors(key, section);
-    return { variant: key, bgColor, textColor, isVisible: isLive, ...extra };
-  };
+const mk = (section, extra) => {
+  const [bgColor, textColor] = designColors(key, section);
+  return { variant: key, bgColor, textColor, isVisible: isLive, ...extra };
+};
   const toLinks = (arr) =>
     arr.map((label, i) => ({
       label,

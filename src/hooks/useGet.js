@@ -5,8 +5,8 @@ import axiosInstance from "../api/axiosInstance";
 
 /**
  * @param {string}  url      - API endpoint (relative to baseURL)
- * @param {object}  params   - optional extra query params e.g. { from, to }
- * @param {object}  options  - extra axios config
+ * @param {object}  params   - optional equery params e.g. { from, to }
+ * @param {object}  options  - eaxios config
  *
  * Automatically injects `lang` from Redux ui state into every request.
  */
