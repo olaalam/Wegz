@@ -22,14 +22,16 @@ import {
   MapPin,
   CheckCircle2,
   Quote,
-  Dumbbell,
-  UtensilsCrossed,
+  Tablet,
+  Smartphone,
+  Layers,
+  SlidersHorizontal,
 } from "lucide-react";
 import { useGet } from "../../hooks/useGet";
 import { useMutation } from "../../hooks/useMutation";
 import { toast } from "sonner";
 import { SECTION_MAP, DESIGNS, DESIGN_KEYS, buildSeed, resolveVariant } from "./sectionsConfig";
-import SectionDesignPreview, { VariantField } from "./DesignPreview";
+import { VariantField, SiteDesignPreview } from "./DesignPreview";
 
 // ─── Shared Styles ─────────────────────────────────────────────────────────────
 const inputCls =
@@ -289,6 +291,21 @@ export default function SectionSettings() {
   const { data, loading, error, refetch } = useGet(`/api/admin/sections/${section}`);
   const { mutate, loading: saving } = useMutation();
 
+  // كل السكاشن (عشان المعاينة تعرض الموقع كامل بنفس الثيم)
+  const { data: allData, refetch: refetchAll } = useGet("/api/admin/dashboard/sections");
+  const allSections = useMemo(() => {
+    const s = allData?.sections || allData?.data?.sections || allData?.data || {};
+    return s && typeof s === "object" && !Array.isArray(s) ? s : {};
+  }, [allData]);
+  const refresh = () => {
+    refetch();
+    refetchAll();
+  };
+
+  const [device, setDevice] = useState("desktop"); // desktop | tablet | mobile
+  const [focus, setFocus] = useState(false); // false = الموقع كامل، true = القسم بس
+  const [mobileTab, setMobileTab] = useState("form"); // form | preview (على الموبايل بس)
+
   const records = useMemo(() => {
     if (!data) return [];
     if (Array.isArray(data)) return data;
@@ -346,6 +363,10 @@ export default function SectionSettings() {
     return names.some((n) => JSON.stringify(form[n] ?? "") !== JSON.stringify(baseline[n] ?? ""));
   }, [form, files, baseline, cfg]);
 
+  // الثيم الحالي = تصميم السجل المختار، والفورم الحي بس للسكشن اللي بيتعدّل
+  const previewVariant = normRecord.variant || "business";
+  const previewForm = form && form._id === record?._id ? form : normRecord;
+
   if (!cfg) return <div className="p-8 text-slate-600">Section not found</div>;
 
   const discard = () => {
@@ -363,7 +384,7 @@ export default function SectionSettings() {
       toast.success(
         isRtl ? "تم تفعيل هذا التصميم في الموقع بنجاح" : "Preset activated successfully"
       );
-      refetch();
+      refresh();
     } else {
       const errorMsg =
         typeof res.error === "object"
@@ -380,7 +401,7 @@ export default function SectionSettings() {
       const doc = res.data?.data || res.data;
       toast.success(isRtl ? "تم إنشاء التصميم" : "Design created");
       if (doc?._id) setPendingId(doc._id);
-      refetch();
+      refresh();
     } else {
       const errorMsg =
         typeof res.error === "object"
@@ -402,7 +423,7 @@ export default function SectionSettings() {
     );
     if (res.success) {
       toast.success(isRtl ? "تم الحذف بنجاح" : "Deleted successfully");
-      refetch();
+      refresh();
     } else {
       const errorMsg =
         typeof res.error === "object"
@@ -461,7 +482,7 @@ export default function SectionSettings() {
       setForm(next);
       setBaseline(next);
       setFiles({});
-      refetch();
+      refresh();
     } else {
       const errorMsg =
         typeof res.error === "object"
@@ -487,15 +508,37 @@ export default function SectionSettings() {
           <span className="font-bold text-slate-900">{cfg.title[lang]}</span>
         </div>
 
-        {/* Two-Column Layout (Using 12-column grid: Form col-span-5, Live Preview col-span-7) */}
+        {/* Mobile: تبديل بين الإعدادات والمعاينة */}
+        <div className="sticky top-0 z-30 -mx-4 mb-5 border-b border-slate-200/80 bg-[#F8FAFC]/90 px-4 py-2 backdrop-blur sm:-mx-6 sm:px-6 lg:hidden">
+          <div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-200/60 p-1">
+            {[
+              { id: "form", icon: SlidersHorizontal, label: isRtl ? "الإعدادات" : "Settings" },
+              { id: "preview", icon: Monitor, label: isRtl ? "المعاينة" : "Preview" },
+            ].map(({ id, icon: TabIcon, label }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setMobileTab(id)}
+                className={`inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-bold transition ${
+                  mobileTab === id ? "bg-white text-blue-700 shadow-sm" : "text-slate-500"
+                }`}
+              >
+                <TabIcon className="h-4 w-4" />
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Two-Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* Form Column */}
-          <div className="lg:col-span-4 space-y-6">
+          <div className={`space-y-6 lg:col-span-5 xl:col-span-4 ${mobileTab === "preview" ? "hidden lg:block" : ""}`}>
             <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xl shadow-slate-900/5">
               
               {/* Card Header */}
-              <div className="flex items-center justify-between border-b border-slate-100 px-6 sm:px-8 py-6 bg-slate-50/50">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/50 px-6 py-6 sm:px-8">
                 <div className="flex items-center gap-4">
                   <span
                     className="flex h-12 w-12 items-center justify-center rounded-2xl shadow-inner shrink-0"
@@ -648,7 +691,7 @@ export default function SectionSettings() {
 
               {/* Save / Discard Bar */}
               {!loading && !error && (
-                <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/70 px-6 sm:px-8 py-5">
+                <div className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/70 px-6 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
                   <span
                     className={`text-xs font-semibold ${
                       dirty ? "text-amber-600" : "text-slate-400"
@@ -663,7 +706,7 @@ export default function SectionSettings() {
                         : "All changes saved"}
                   </span>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-end gap-3">
                     <button
                       onClick={discard}
                       disabled={!dirty || saving}
@@ -690,89 +733,125 @@ export default function SectionSettings() {
             </div>
           </div>
 
-          {/* Sticky Live Preview Column (Wider: col-span-7) */}
-          <div className="lg:col-span-8 sticky top-6 space-y-4">
+          {/* Live Preview Column */}
+          <div
+            className={`space-y-3 lg:sticky lg:top-6 lg:col-span-7 xl:col-span-8 ${
+              mobileTab === "form" ? "hidden lg:block" : ""
+            }`}
+          >
             <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xl shadow-slate-900/5">
-              
               {/* Preview Header */}
-              <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/80 px-6 py-4">
-                <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600/10 text-blue-600">
+              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-slate-100 bg-slate-50/80 px-4 py-3 sm:px-6">
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-600/10 text-blue-600">
                     <Monitor className="h-4 w-4" />
                   </div>
-                  <div>
-                    <p className="text-xs font-extrabold text-slate-900">
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-extrabold text-slate-900">
                       {isRtl ? "معاينة مباشرة" : "Live Preview"}
                     </p>
-                    <p className="text-[10px] text-slate-400">
+                    <p className="truncate text-[10px] text-slate-400">
                       {isRtl
-                        ? "يتحدث فوراً مع كل تعديل"
-                        : "Updates instantly as you type"}
+                        ? "الموقع كامل بنفس الثيم، والقسم اللي بتعدّليه بس هو اللي بيتغيّر"
+                        : "Full site in this theme — only the section you edit changes"}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span
-                    className={`h-2 w-2 rounded-full ${
-                      dirty ? "bg-amber-400 animate-pulse" : "bg-emerald-500"
-                    }`}
-                  />
-                  <span className="text-[10px] font-bold text-slate-500">
-                    {dirty
-                      ? isRtl
-                        ? "تغييرات معلقة"
-                        : "Pending"
-                      : isRtl
-                        ? "محفوظ"
-                        : "Saved"}
+
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* الموقع كامل / القسم فقط */}
+                  <div className="inline-flex rounded-xl border border-slate-200 bg-white p-0.5 shadow-sm">
+                    {[
+                      { val: false, icon: Layers, label: isRtl ? "الموقع كامل" : "Full site" },
+                      { val: true, icon: Eye, label: isRtl ? "القسم فقط" : "Section only" },
+                    ].map(({ val, icon: ModeIcon, label }) => (
+                      <button
+                        key={label}
+                        type="button"
+                        onClick={() => setFocus(val)}
+                        aria-pressed={focus === val}
+                        className={`inline-flex items-center gap-1.5 rounded-[10px] px-2.5 py-1.5 text-[11px] font-bold transition ${
+                          focus === val ? "bg-blue-600 text-white shadow" : "text-slate-500 hover:text-slate-800"
+                        }`}
+                      >
+                        <ModeIcon className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">{label}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* حجم الشاشة */}
+                  <div className="hidden rounded-xl border border-slate-200 bg-white p-0.5 shadow-sm sm:inline-flex">
+                    {[
+                      { id: "desktop", icon: Monitor, label: isRtl ? "كمبيوتر" : "Desktop" },
+                      { id: "tablet", icon: Tablet, label: isRtl ? "تابلت" : "Tablet" },
+                      { id: "mobile", icon: Smartphone, label: isRtl ? "موبايل" : "Mobile" },
+                    ].map(({ id, icon: DevIcon, label }) => (
+                      <button
+                        key={id}
+                        type="button"
+                        title={label}
+                        aria-label={label}
+                        aria-pressed={device === id}
+                        onClick={() => setDevice(id)}
+                        className={`flex h-7 w-8 items-center justify-center rounded-[10px] transition ${
+                          device === id ? "bg-slate-900 text-white shadow" : "text-slate-500 hover:text-slate-800"
+                        }`}
+                      >
+                        <DevIcon className="h-3.5 w-3.5" />
+                      </button>
+                    ))}
+                  </div>
+
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className={`h-2 w-2 rounded-full ${dirty ? "animate-pulse bg-amber-400" : "bg-emerald-500"}`} />
+                    <span className="hidden text-[10px] font-bold text-slate-500 md:inline">
+                      {dirty ? (isRtl ? "تغييرات معلقة" : "Pending") : isRtl ? "محفوظ" : "Saved"}
+                    </span>
                   </span>
+
+                  <a
+                    href="https://wegz.org"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={isRtl ? "فتح الموقع الفعلي" : "Open Live Site"}
+                    className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 text-[11px] font-bold text-slate-700 shadow-sm transition hover:border-blue-400 hover:text-blue-600"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    <span className="hidden xl:inline">{isRtl ? "فتح الموقع" : "Open Live Site"}</span>
+                  </a>
                 </div>
               </div>
 
               {/* Preview Content */}
-              <div className="p-5 bg-[#F8FAFC]">
+              <div className="bg-[#F8FAFC] p-3 sm:p-5">
                 {loading ? (
-                  <div className="h-48 animate-pulse rounded-2xl bg-slate-200" />
+                  <div className="h-[60vh] animate-pulse rounded-2xl bg-slate-200" />
                 ) : (
-                  <div className="space-y-4">
-                    <SectionDesignPreview
-                      section={section}
-                      form={form}
-                      files={files}
-                      isRtl={isRtl}
-                    />
-
-                    {/* Info hint */}
-                    <div className="flex items-start gap-2.5 rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
-                      <Eye className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
-                      <div>
-                        <p className="text-xs font-bold text-blue-800">
-                          {isRtl ? "معاينة الموقع" : "Site Preview"}
-                        </p>
-                        <p className="mt-0.5 text-[11px] text-blue-600/80 leading-relaxed">
-                          {isRtl
-                            ? "هذه المعاينة تعكس التغييرات فوراً. اضغط «حفظ» لتطبيقها على الموقع الفعلي."
-                            : "This preview reflects your edits in real time. Press «Save» to publish changes to the live site."}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Open live site */}
-                    <a
-                      href="https://wegz.org"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-700 shadow-sm transition hover:border-blue-400 hover:text-blue-600 hover:shadow-md"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                      {isRtl ? "فتح الموقع الفعلي" : "Open Live Site"}
-                    </a>
-                  </div>
+                  <SiteDesignPreview
+                    variant={previewVariant}
+                    editing={section}
+                    form={previewForm}
+                    files={files}
+                    allSections={allSections}
+                    isRtl={isRtl}
+                    lang={lang}
+                    device={device}
+                    focus={focus}
+                  />
                 )}
+
+                <p className="mt-3 flex items-start gap-2 text-[11px] leading-relaxed text-slate-500">
+                  <Eye className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-500" />
+                  <span>
+                    {isRtl
+                      ? `المعاينة بتتحدّث فوراً مع كل تعديل في «${cfg.title.ar}». مرّري الماوس على أي قسم تاني عشان تنقلي لتعديله، واضغطي «حفظ» لنشر التغييرات على الموقع.`
+                      : `The preview updates instantly as you edit “${cfg.title.en}”. Hover any other section to jump to it, and press “Save” to publish.`}
+                  </span>
+                </p>
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </div>

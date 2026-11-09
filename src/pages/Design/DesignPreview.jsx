@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Phone,
   Mail,
@@ -41,8 +42,10 @@ import {
   ThumbsUp,
   CalendarDays,
   Send,
+  Pencil,
+  X,
 } from "lucide-react";
-import { DESIGNS, DESIGN_CONTENT, DESIGN_KEYS, designColors, resolveVariant } from "./sectionsConfig";
+import { DESIGNS, DESIGN_CONTENT, DESIGN_KEYS, SECTION_MAP, buildSeed, designColors, resolveVariant } from "./sectionsConfig";
 
 // ─── Keyframe Animations & CSS Styles ─────────────────────────────────────────
 const KF = `
@@ -311,23 +314,62 @@ function Socials({ className = "" }) {
 }
 
 // ─── HEADERS ─────────────────────────────────────────────────────────────
+// ─── زرار القائمة + قايمة الموبايل (بتظهر تحت عرض 672px وبتفتح/تقفل بالضغط) ─────
+function MenuToggle({ open, onClick, className = "", style }) {
+  return (
+    <button
+      type="button"
+      aria-label="Menu"
+      aria-expanded={open}
+      onClick={onClick}
+      className={`flex h-9 w-9 shrink-0 items-center justify-center transition-all duration-200 active:scale-90 [.cq-2xl_&]:hidden ${className}`}
+      style={style}
+    >
+      {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+    </button>
+  );
+}
+
+function MobileLinks({ open, links, active, onPick, className = "", itemClass = "", activeStyle, idleStyle, children }) {
+  if (!open) return null;
+  return (
+    <div className={`[.cq-2xl_&]:hidden ${className}`} style={{ animation: "dsDrop .25s ease-out both" }}>
+      {links.slice(0, 8).map((l, i) => (
+        <button
+          key={i}
+          type="button"
+          onClick={() => onPick(i)}
+          className={`flex w-full items-center justify-between text-start ${itemClass}`}
+          style={active === i ? activeStyle : idleStyle}
+        >
+          <span>{l.label}</span>
+          {l.hasDropdown && <span className="text-[8px] opacity-60">▼</span>}
+        </button>
+      ))}
+      {children}
+    </div>
+  );
+}
+
 function HeaderBusiness({ ctx }) {
   const [active, setActive] = useState(0);
+  const [open, setOpen] = useState(false);
   const { d, links, isRtl } = ctx;
+  const cta = d.headerCta?.[isRtl ? "ar" : "en"] || (isRtl ? "استشارة مجانية" : "Free Consultation");
   return (
-    <div className="relative bg-[#212429] pt-2 px-4 pb-12">
-      <div className="flex justify-between items-center text-[10px] text-slate-300 pb-2 px-6 border-b border-white/10 mb-3">
-        <span>Limited time offer, Buy WordPress theme only <strong>$39</strong></span>
-        <button className="bg-[#59981A] text-white px-2 py-0.5 rounded text-[9px] hover:bg-opacity-90">Download Theme</button>
+    <div className={`relative bg-[#212429] px-3 pt-2 [.cq-2xl_&]:px-4 ${ctx.embedded ? "pb-6" : "pb-12"}`}>
+      <div className="mb-3 flex items-center justify-between gap-2 border-b border-white/10 px-1 pb-2 text-[10px] text-slate-300 [.cq-2xl_&]:px-6">
+        <span className="min-w-0 truncate">Limited time offer, Buy WordPress theme only <strong>$39</strong></span>
+        <button className="shrink-0 rounded bg-[#59981A] px-2 py-0.5 text-[9px] text-white hover:bg-opacity-90">Download Theme</button>
       </div>
 
       <div
-        className="relative mx-auto flex items-center justify-between gap-4 rounded-full bg-white px-6 py-2.5 shadow-2xl max-w-5xl"
+        className="relative mx-auto flex max-w-5xl items-center justify-between gap-2 rounded-full bg-white px-3 py-2 shadow-2xl [.cq-2xl_&]:gap-4 [.cq-2xl_&]:px-6 [.cq-2xl_&]:py-2.5"
         style={{ animation: "dsDrop .6s ease-out both" }}
       >
         <Logo ctx={ctx} color="#1f2d45" />
 
-        <nav className="hidden min-w-0 items-center gap-4 sm:flex">
+        <nav className="hidden min-w-0 items-center gap-4 [.cq-2xl_&]:flex">
           {links.slice(0, 6).map((l, i) => (
             <button
               key={i}
@@ -342,24 +384,38 @@ function HeaderBusiness({ ctx }) {
           ))}
         </nav>
 
+        <MenuToggle open={open} onClick={() => setOpen((o) => !o)} className="rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200" />
+
         <button
           type="button"
-          className="shrink-0 rounded-full px-5 py-2.5 text-xs font-bold text-white transition-transform duration-300 hover:scale-105 active:scale-95 shadow-md"
+          className="shrink-0 rounded-full px-3 py-2 text-[11px] font-bold text-white shadow-md transition-transform duration-300 hover:scale-105 active:scale-95 [.cq-2xl_&]:px-5 [.cq-2xl_&]:py-2.5 [.cq-2xl_&]:text-xs"
           style={{ background: "linear-gradient(90deg, #3db88a, #2aa080)" }}
         >
-          {d.headerCta?.[isRtl ? "ar" : "en"] || (isRtl ? "استشارة مجانية" : "Free Consultation")}
+          {cta}
         </button>
       </div>
+
+      <MobileLinks
+        open={open}
+        links={links}
+        active={active}
+        onPick={(i) => { setActive(i); setOpen(false); }}
+        className="mx-auto mt-2 max-w-5xl overflow-hidden rounded-3xl bg-white p-2 shadow-2xl"
+        itemClass="rounded-2xl px-4 py-2.5 text-xs font-bold transition-colors hover:bg-slate-50"
+        activeStyle={{ color: "#3db88a", background: "#effaf6" }}
+        idleStyle={{ color: "#334155" }}
+      />
     </div>
   );
 }
 
 function HeaderCorporate({ ctx }) {
   const [active, setActive] = useState(0);
+  const [open, setOpen] = useState(false);
   const { links } = ctx;
   return (
     <div
-      className="relative px-5 pb-6 pt-2.5"
+      className="relative px-4 pb-5 pt-2.5 [.cq-2xl_&]:px-5 [.cq-2xl_&]:pb-6"
       style={{
         background: `linear-gradient(135deg, ${ctx.bg}, #06163d)`,
         color: ctx.text,
@@ -373,7 +429,7 @@ function HeaderCorporate({ ctx }) {
       </div>
       <div className="flex items-center justify-between gap-3 pt-3.5" style={{ animation: "dsDrop .6s .1s ease-out both" }}>
         <Logo ctx={ctx} color={ctx.text} />
-        <nav className="flex min-w-0 items-center gap-3 overflow-x-auto whitespace-nowrap text-[10px] font-bold">
+        <nav className="hidden min-w-0 items-center gap-3 whitespace-nowrap text-[10px] font-bold [.cq-2xl_&]:flex">
           {links.slice(0, 6).map((l, i) => (
             <button
               key={i}
@@ -391,21 +447,37 @@ function HeaderCorporate({ ctx }) {
           ))}
           <Search className="h-3.5 w-3.5 shrink-0" />
         </nav>
+        <div className="flex items-center gap-2 [.cq-2xl_&]:hidden">
+          <Search className="h-4 w-4 shrink-0 opacity-80" />
+          <MenuToggle open={open} onClick={() => setOpen((o) => !o)} className="rounded-md bg-white/10 hover:bg-white/20" />
+        </div>
       </div>
+
+      <MobileLinks
+        open={open}
+        links={links}
+        active={active}
+        onPick={(i) => { setActive(i); setOpen(false); }}
+        className="mt-3 overflow-hidden rounded-md bg-white/10 p-1"
+        itemClass="rounded px-3 py-2.5 text-xs font-bold transition-colors hover:bg-white/10"
+        activeStyle={{ background: "rgba(255,255,255,.18)" }}
+      />
     </div>
   );
 }
 
 function HeaderCorporateRed({ ctx }) {
   const [active, setActive] = useState(0);
+  const [open, setOpen] = useState(false);
   const { links, d, isRtl } = ctx;
+  const cta = d.headerCta?.[isRtl ? "ar" : "en"] || "Get A Free Quote";
   return (
     <div style={{ background: ctx.bg, color: ctx.text }}>
       <div className="flex items-stretch justify-between">
-        <div className="flex items-center px-5 py-3" style={{ animation: "dsSlide .5s ease-out both" }}>
+        <div className="flex items-center px-4 py-3 [.cq-2xl_&]:px-5" style={{ animation: "dsSlide .5s ease-out both" }}>
           <Logo ctx={ctx} color={ctx.text} />
         </div>
-        <nav className="flex items-stretch overflow-x-auto" style={{ animation: "dsDrop .6s ease-out both" }}>
+        <nav className="hidden items-stretch [.cq-2xl_&]:flex" style={{ animation: "dsDrop .6s ease-out both" }}>
           {links.slice(0, 6).map((l, i) => (
             <button
               key={i}
@@ -429,29 +501,57 @@ function HeaderCorporateRed({ ctx }) {
               animation: "dsPulse 2.4s ease-in-out infinite",
             }}
           >
-            {d.headerCta?.[isRtl ? "ar" : "en"] || "Get A Free Quote"}
+            {cta}
           </button>
         </nav>
+        <MenuToggle
+          open={open}
+          onClick={() => setOpen((o) => !o)}
+          className="!h-auto w-14 self-stretch rounded-none"
+          style={{ background: d.accent, color: d.accentText }}
+        />
       </div>
+
+      <MobileLinks
+        open={open}
+        links={links}
+        active={active}
+        onPick={(i) => { setActive(i); setOpen(false); }}
+        className="border-t border-white/10 bg-black/10"
+        itemClass="border-s-[3px] border-transparent px-5 py-3 text-[11px] font-bold uppercase tracking-wide transition-colors hover:bg-white/10"
+        activeStyle={{ background: "rgba(255,255,255,.1)", borderInlineStartColor: d.accent }}
+      >
+        <div className="p-3">
+          <button
+            type="button"
+            className="w-full px-4 py-3 text-[10px] font-extrabold uppercase"
+            style={{ background: d.accent, color: d.accentText }}
+          >
+            {cta}
+          </button>
+        </div>
+      </MobileLinks>
     </div>
   );
 }
 
 function HeaderConstruction({ ctx }) {
+  const [active, setActive] = useState(0);
+  const [open, setOpen] = useState(false);
   const { links, d, isRtl } = ctx;
   return (
     <div>
       <div
-        className="flex items-center justify-between px-5 py-1.5 text-[9px]"
+        className="flex items-center justify-between gap-2 px-4 py-1.5 text-[9px] [.cq-2xl_&]:px-5"
         style={{ background: ctx.bg, color: ctx.text, animation: "dsFade .5s ease-out both" }}
       >
-        <span className="flex items-center gap-1.5 opacity-90">
-          <Phone className="h-2.5 w-2.5" style={{ color: d.accent }} /> +1 (818) 23 45 678
+        <span className="flex min-w-0 items-center gap-1.5 truncate opacity-90">
+          <Phone className="h-2.5 w-2.5 shrink-0" style={{ color: d.accent }} /> +1 (818) 23 45 678
         </span>
         <Socials />
       </div>
       <div
-        className="relative px-5 pb-6 pt-4"
+        className="relative px-4 pb-5 pt-4 [.cq-2xl_&]:px-5 [.cq-2xl_&]:pb-6"
         style={{ background: "linear-gradient(120deg,#f1e4cf 0%,#e5c799 45%,#b98a52 100%)" }}
       >
         <div
@@ -461,20 +561,39 @@ function HeaderConstruction({ ctx }) {
           <div className="flex items-center gap-2">
             <span className="text-sm font-black tracking-tight" style={{ fontFamily: SERIF }}>{ctx.brand}</span>
           </div>
-          <nav className="flex min-w-0 items-center gap-3 overflow-x-auto whitespace-nowrap text-[10px] font-semibold">
+          <nav className="hidden min-w-0 items-center gap-3 whitespace-nowrap text-[10px] font-semibold [.cq-2xl_&]:flex">
             {links.slice(0, 5).map((l, i) => (
-              <button key={i} type="button" className="shrink-0 transition-colors hover:text-black">
+              <button
+                key={i}
+                type="button"
+                onClick={() => setActive(i)}
+                className="shrink-0 transition-colors hover:text-black"
+                style={active === i ? { fontWeight: 800, borderBottom: `2px solid ${d.accent}` } : undefined}
+              >
                 {l.label}
               </button>
             ))}
           </nav>
-          <button
-            type="button"
-            className="shrink-0 bg-white px-3 py-2 text-[10px] font-bold shadow-md transition-all duration-300 hover:-translate-y-0.5"
-          >
-            {d.headerCta?.[isRtl ? "ar" : "en"] || "Free Consultation"}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="hidden shrink-0 bg-white px-3 py-2 text-[10px] font-bold shadow-md transition-all duration-300 hover:-translate-y-0.5 [.cq-md_&]:block"
+            >
+              {d.headerCta?.[isRtl ? "ar" : "en"] || "Free Consultation"}
+            </button>
+            <MenuToggle open={open} onClick={() => setOpen((o) => !o)} className="bg-white shadow-md hover:bg-slate-50" />
+          </div>
         </div>
+
+        <MobileLinks
+          open={open}
+          links={links}
+          active={active}
+          onPick={(i) => { setActive(i); setOpen(false); }}
+          className="mt-3 bg-white shadow-md"
+          itemClass="border-s-4 border-transparent px-4 py-2.5 text-xs font-bold text-[#1f2d45] transition-colors hover:bg-slate-50"
+          activeStyle={{ borderInlineStartColor: d.accent, background: "#faf5ea" }}
+        />
       </div>
     </div>
   );
@@ -498,7 +617,7 @@ function HeroBusiness({ ctx }) {
     : "M 0,0 L 100,0 L 100,100 L 48,100 C 60,85 65,70 60,50 C 55,30 35,30 0,40 Z";
 
   return (
-    <div className="relative min-h-[650px] w-full overflow-hidden bg-white">
+    <div className={`relative w-full overflow-hidden bg-white ${ctx.embedded ? "min-h-[520px]" : "min-h-[650px]"}`}>
       {/* 1. خلفية الصورة المغطاة لليمين والأعلى */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         <img
@@ -510,7 +629,8 @@ function HeroBusiness({ ctx }) {
       </div>
 
       {/* 2. الطبقة البيضاء المنحنية (Curved Shape) على اليسار */}
-      <div className="pointer-events-none absolute inset-0 z-10">
+      <div className="pointer-events-none absolute inset-0 z-10 bg-white/85 [.cq-3xl_&]:hidden" />
+      <div className="pointer-events-none absolute inset-0 z-10 hidden [.cq-3xl_&]:block">
         <svg
           viewBox="0 0 1440 800"
           fill="none"
@@ -533,13 +653,14 @@ function HeroBusiness({ ctx }) {
       </div>
 
       {/* 3. شريط الهيدر (Navbar Floating) */}
-      <div className="absolute inset-x-0 top-6 z-30 flex justify-center px-4 sm:px-8">
+      {!ctx.embedded && (
+      <div className="absolute inset-x-0 top-6 z-30 flex justify-center px-4 [.cq-2xl_&]:px-8">
         <div className="flex w-full max-w-5xl items-center justify-between rounded-full bg-white/95 px-6 py-3 shadow-[0_10px_30px_rgba(0,0,0,0.08)] backdrop-blur-md">
           {/* الشعار */}
           <Logo ctx={ctx} color="#17212b" />
 
           {/* القائمة الرئيسية */}
-          <nav className="hidden items-center gap-6 md:flex">
+          <nav className="hidden items-center gap-6 [.cq-3xl_&]:flex">
             {links.slice(0, 6).map((link, index) => (
               <button
                 key={`${link.label}-${index}`}
@@ -567,9 +688,10 @@ function HeroBusiness({ ctx }) {
           </button>
         </div>
       </div>
+      )}
 
       {/* 4. محتوى النص الرئيسي (Hero Content) */}
-      <div className="relative z-20 flex min-h-[650px] items-center px-6 pt-24 lg:px-20">
+      <div className={`relative z-20 flex items-center px-6 [.cq-5xl_&]:px-20 ${ctx.embedded ? "min-h-[520px] py-14" : "min-h-[650px] pt-24"}`}>
         <div className="max-w-md space-y-6" style={{ animation: "dsSlide .9s .2s ease-out backwards" }}>
           {/* Eyebrow */}
           <p
@@ -581,7 +703,7 @@ function HeroBusiness({ ctx }) {
 
           {/* Main Title */}
           <h1
-            className="text-4xl font-extrabold leading-[1.2] text-[#111827] lg:text-5xl"
+            className="text-4xl font-extrabold leading-[1.2] text-[#111827] [.cq-5xl_&]:text-5xl"
             style={{ fontFamily: SERIF }}
           >
             {titleParts.map((part, index) =>
@@ -720,12 +842,13 @@ function HeroCorporateRed({ ctx }) {
       }}
     >
       {/* 1. Header / Navbar - تم ضبط الـ Layout والمسافات ومنع التداخل */}
-      <div className="absolute inset-x-0 top-0 z-30 flex items-center justify-between border-b border-white/10 px-6 py-4 lg:px-10">
+      {!ctx.embedded && (
+      <div className="absolute inset-x-0 top-0 z-30 flex items-center justify-between border-b border-white/10 px-6 py-4 [.cq-5xl_&]:px-10">
         <div className="shrink-0 flex items-center">
           <Logo ctx={ctx} color="#ffffff" />
         </div>
 
-        <nav className="hidden min-w-0 items-center justify-center gap-4 xl:gap-6 lg:flex">
+        <nav className="hidden min-w-0 items-center justify-center gap-4 [.cq-7xl_&]:gap-6 [.cq-5xl_&]:flex">
           {navLinks.map((link, index) => (
             <button
               key={`${link.label}-${index}`}
@@ -751,16 +874,17 @@ function HeroCorporateRed({ ctx }) {
             (isRtl ? "طلب عرض سعر" : "GET A FREE QUOTE")}
         </button>
       </div>
+      )}
 
       {/* 2. Hero Content Area */}
-      <div className="relative z-10 mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-8 px-6 pt-28 pb-12 lg:grid-cols-2 lg:px-12">
+      <div className={`relative z-10 mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-8 px-6 pb-12 [.cq-5xl_&]:grid-cols-2 [.cq-5xl_&]:px-12 ${ctx.embedded ? "pt-12" : "pt-28"}`}>
         {/* Left Column: Text Details */}
         <div className="space-y-6" style={{ animation: "dsSlide .8s ease-out backwards" }}>
-          <h1 className="text-3xl font-black leading-tight tracking-tight text-white sm:text-4xl lg:text-5xl">
+          <h1 className="text-3xl font-black leading-tight tracking-tight text-white [.cq-2xl_&]:text-4xl [.cq-5xl_&]:text-5xl">
             {form.title || c.heroTitle || "We Bring Experimental"}
           </h1>
 
-          <p className="max-w-md text-xs sm:text-sm leading-relaxed text-white/80">
+          <p className="max-w-md text-xs [.cq-2xl_&]:text-sm leading-relaxed text-white/80">
             {form.subtitle ||
               c.heroSubtitle ||
               "Tackle your most significant business challenges with behavioral science, anthropology and strategic foresight to create powerful solutions."}
@@ -822,7 +946,7 @@ function HeroCorporateRed({ ctx }) {
 
       {/* 3. Bottom Stats Bar */}
       <div className="relative z-20 border-t border-white/10 bg-[#060a30] py-6">
-        <div className="mx-auto grid max-w-5xl grid-cols-1 divide-y divide-white/10 sm:grid-cols-3 sm:divide-y-0 sm:divide-x sm:divide-white/10">
+        <div className="mx-auto grid max-w-5xl grid-cols-1 divide-y divide-white/10 [.cq-2xl_&]:grid-cols-3 [.cq-2xl_&]:divide-y-0 [.cq-2xl_&]:divide-x [.cq-2xl_&]:divide-white/10">
           <div className="flex items-center justify-center gap-4 py-2">
             <CountUp to={125} suffix="+" className="text-3xl font-black text-[#e50914]" />
             <span className="text-xs font-semibold leading-tight text-white/80">
@@ -931,7 +1055,7 @@ function InfoConstruction({ ctx }) {
         <h3 className="text-2xl font-black mt-1 leading-tight">{form.heading || "We know what your needs are"}</h3>
       </div>
 
-      <div className="mx-auto max-w-4xl grid grid-cols-1 gap-6 sm:grid-cols-3">
+      <div className="mx-auto max-w-4xl grid grid-cols-1 gap-6 [.cq-2xl_&]:grid-cols-3">
         {cards.map((item, idx) => {
           const isFlipped = flippedCards[idx] ?? item.isDefaultFlipped;
           return (
@@ -983,7 +1107,7 @@ function InfoBusiness({ ctx }) {
   return (
     <div className="bg-[#effaf6] pb-10">
       <div className="mx-auto max-w-4xl px-4 pt-6">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 [.cq-2xl_&]:grid-cols-4">
           <div className="rounded-2xl bg-[#34b78f] p-5 text-white shadow-lg" style={{ animation: "dsSlide .7s ease-out backwards" }}>
             <p className="text-[10px] font-extrabold uppercase tracking-widest opacity-80">OUR SERVICES</p>
             <h4 className="mt-2 text-base font-black leading-snug">We Will Help Your Business Growing</h4>
@@ -1012,14 +1136,14 @@ function InfoCorporate({ ctx }) {
   return (
     <>
     <div className="bg-slate-100 p-8">
-      <div className="mx-auto max-w-4xl grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="mx-auto max-w-4xl grid grid-cols-1 gap-4 [.cq-2xl_&]:grid-cols-3">
         <div className="flex flex-col justify-between bg-[#0b2a6b] p-6 text-white shadow-md" style={{ animation: "dsSlide .7s ease-out backwards" }}>
           <div>
             <p className="text-[9px] font-bold uppercase tracking-widest opacity-70">OUR SERVICES</p>
             <h4 className="mt-2 text-xl font-black leading-tight">WHAT WE CAN DO?</h4>
           </div>
         </div>
-        <div className="col-span-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 [.cq-2xl_&]:col-span-2 [.cq-2xl_&]:grid-cols-2">
           {services.map((s, i) => (
             <div key={i} className="flex flex-col justify-between border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#0b2a6b]/40 hover:shadow-md" style={{ animation: `dsRise .7s ${0.1 + i * 0.1}s ease-out backwards` }}>
               <div>
@@ -1052,14 +1176,14 @@ function InfoCorporateRed({ ctx }) {
 
   return (
     <>
-    <section className="bg-white py-16 lg:py-24">
-      <div className="mx-auto max-w-6xl px-6 lg:px-12">
-        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-16">
+    <section className="bg-white py-16 [.cq-5xl_&]:py-24">
+      <div className="mx-auto max-w-6xl px-6 [.cq-5xl_&]:px-12">
+        <div className="grid grid-cols-1 items-center gap-12 [.cq-5xl_&]:grid-cols-2 [.cq-5xl_&]:gap-16">
           
           {/* 1. قسم الصور (جهة اليسار) */}
-          <div className="relative mx-auto flex w-full max-w-md items-center justify-center min-h-[420px] lg:max-w-none">
+          <div className="relative mx-auto flex w-full max-w-md items-center justify-center min-h-[420px] [.cq-5xl_&]:max-w-none">
             {/* الصورة الرئيسية الطويلة الدائرية */}
-            <div className="relative z-10 h-[380px] w-[58%] overflow-hidden rounded-full shadow-xl sm:h-[440px]" style={{ animation: "dsSlide .8s ease-out backwards" }}>
+            <div className="relative z-10 h-[380px] w-[58%] overflow-hidden rounded-full shadow-xl [.cq-2xl_&]:h-[440px]" style={{ animation: "dsSlide .8s ease-out backwards" }}>
               <img
                 src={mainImg}
                 alt="Business Discussion"
@@ -1068,7 +1192,7 @@ function InfoCorporateRed({ ctx }) {
             </div>
 
             {/* الصورة البيضاوية المتداخلة جهة اليسار/الأسفل */}
-            <div className="absolute left-0 bottom-0 z-20 h-[220px] w-[52%] overflow-hidden rounded-full border-4 border-white shadow-2xl sm:h-[260px]" style={{ animation: "dsPop .7s .3s ease-out backwards, dsFloatSoft 6s 1.2s ease-in-out infinite" }}>
+            <div className="absolute left-0 bottom-0 z-20 h-[220px] w-[52%] overflow-hidden rounded-full border-4 border-white shadow-2xl [.cq-2xl_&]:h-[260px]" style={{ animation: "dsPop .7s .3s ease-out backwards, dsFloatSoft 6s 1.2s ease-in-out infinite" }}>
               <img
                 src={secondaryImg}
                 alt="Contract Signing"
@@ -1080,13 +1204,13 @@ function InfoCorporateRed({ ctx }) {
           {/* 2. قسم المحتوى والنصوص (جهة اليمين) */}
           <div className="space-y-6" style={{ animation: "dsSlideR .8s .15s ease-out backwards" }}>
             {/* العنوان الرئيسي */}
-            <h2 className="text-3xl font-extrabold leading-tight text-[#17212b] sm:text-4xl lg:text-[42px]">
+            <h2 className="text-3xl font-extrabold leading-tight text-[#17212b] [.cq-2xl_&]:text-4xl [.cq-5xl_&]:text-[42px]">
               {titleParts.map((part, index) =>
                 part.toLowerCase() === "live the life you want" ? (
                   <span
                     key={index}
                     style={{ color: d?.accent || "#d9082b" }}
-                    className="block sm:inline"
+                    className="block [.cq-2xl_&]:inline"
                   >
                     {part}
                   </span>
@@ -1121,7 +1245,7 @@ function InfoCorporateRed({ ctx }) {
                 <CountUp
                   to={97}
                   suffix="%"
-                  className="text-3xl font-black sm:text-4xl"
+                  className="text-3xl font-black [.cq-2xl_&]:text-4xl"
                   style={{ color: d?.accent || "#d9082b" }}
                 />
                 <p className="mt-1 text-xs font-extrabold text-[#17212b]">
@@ -1133,7 +1257,7 @@ function InfoCorporateRed({ ctx }) {
                 <CountUp
                   to={83}
                   suffix="%"
-                  className="text-3xl font-black sm:text-4xl"
+                  className="text-3xl font-black [.cq-2xl_&]:text-4xl"
                   style={{ color: d?.accent || "#d9082b" }}
                 />
                 <p className="mt-1 text-xs font-extrabold text-[#17212b]">
@@ -1231,7 +1355,7 @@ function ServicesConstruction({ ctx }) {
           color={CONSTRUCTION_NAVY}
         />
 
-        <div className="mx-auto mt-8 grid max-w-3xl grid-cols-3 items-stretch gap-3">
+        <div className="mx-auto mt-8 grid max-w-3xl grid-cols-1 items-stretch gap-3 [.cq-2xl_&]:grid-cols-3">
           {services.map((s, i) => {
             const on = active === i;
             const Icon = s.icon;
@@ -1308,7 +1432,7 @@ function Info2Construction({ ctx }) {
 
   return (
     <div className="relative overflow-hidden bg-white" style={{ color: CONSTRUCTION_NAVY }}>
-      <div className="grid grid-cols-2">
+      <div className="grid grid-cols-1 [.cq-3xl_&]:grid-cols-2">
         {/* العمود النصي + الصورة */}
         <Reveal x={-24} y={0} className="relative px-6 pb-8 pt-8">
           <span
@@ -1343,12 +1467,12 @@ function Info2Construction({ ctx }) {
         </Reveal>
 
         {/* لوحة الخطوات */}
-        <div className="mt-12 px-5 py-6" style={{ background: ctx.bg, color: ctx.text }}>
+        <div className="px-5 py-6 [.cq-3xl_&]:mt-12" style={{ background: ctx.bg, color: ctx.text }}>
           <ol className="space-y-5">
             {steps.map((s, i) => (
               <Reveal as="li" key={i} x={28} y={0} delay={150 + i * 170} className="flex items-start gap-3">
                 <span
-                  className="-ms-9 flex h-14 w-14 shrink-0 items-center justify-center text-2xl font-black"
+                  className="flex h-14 w-14 shrink-0 [.cq-3xl_&]:-ms-9 items-center justify-center text-2xl font-black"
                   style={{ background: accent, color: d.accentText || CONSTRUCTION_NAVY }}
                 >
                   {String(i + 1).padStart(2, "0")}
@@ -1419,7 +1543,7 @@ function TestimonialsConstruction({ ctx }) {
       />
 
       {/* المسار: الكارت الحالي في النص والجيران باهتين على الجنب */}
-      <div className="relative mt-8 h-[250px]">
+      <div className="relative mt-8 h-[300px] [.cq-2xl_&]:h-[250px]">
         {items.map((it, i) => {
           const offset = i - idx;
           const on = offset === 0;
@@ -1427,7 +1551,7 @@ function TestimonialsConstruction({ ctx }) {
             <div
               key={i}
               aria-hidden={!on}
-              className="absolute bottom-0 top-9 w-[74%] transition-all duration-500 ease-out"
+              className="absolute bottom-0 top-9 w-[88%] transition-all duration-500 ease-out [.cq-3xl_&]:w-[74%]"
               style={{
                 insetInlineStart: "50%",
                 transform: `translateX(${isRtl ? "50%" : "-50%"}) translateX(${offset * 108 * dir}%) scale(${on ? 1 : 0.94})`,
@@ -1437,12 +1561,12 @@ function TestimonialsConstruction({ ctx }) {
             >
               <div className="relative h-full bg-white px-6 pb-6 pt-8 shadow-[0_14px_40px_-14px_rgba(31,45,69,0.25)] ring-1 ring-slate-100">
                 {/* الصورة بإطار أصفر */}
-                <div className="absolute -top-8 -start-6 h-[104px] w-[104px]">
+                <div className="absolute -top-8 -start-4 h-20 w-20 [.cq-2xl_&]:-start-6 [.cq-2xl_&]:h-[104px] [.cq-2xl_&]:w-[104px]">
                   <span aria-hidden="true" className="absolute -bottom-3 -start-3 h-full w-full" style={{ background: accent }} />
                   <img src={it.photo} alt="" className="relative h-full w-full object-cover" />
                 </div>
 
-                <div className="ms-[92px] flex h-full flex-col justify-between">
+                <div className="ms-[68px] flex h-full flex-col justify-between [.cq-2xl_&]:ms-[92px]">
                   <p className="text-[11px] leading-relaxed text-slate-700">“{it.text}”</p>
                   <p className="text-[11px] italic text-slate-400">- {it.name}</p>
                 </div>
@@ -1511,11 +1635,9 @@ function ContactConstruction({ ctx }) {
   ].filter((r) => r.value);
 
   return (
-    <div
-      className="relative overflow-hidden px-6 py-10"
-      style={{ background: `linear-gradient(to ${isRtl ? "left" : "right"}, ${navy} 0 56%, #ffffff 56% 100%)` }}
-    >
-      <div className="grid grid-cols-[1fr_1.15fr] items-center gap-6">
+    <div className="relative overflow-hidden px-4 py-10 [.cq-2xl_&]:px-6" style={{ background: navy }}>
+      <span aria-hidden="true" className="absolute inset-y-0 end-0 hidden w-[44%] bg-white [.cq-3xl_&]:block" />
+      <div className="relative grid grid-cols-1 items-center gap-6 [.cq-3xl_&]:grid-cols-[1fr_1.15fr]">
         <div className="relative" style={{ color: ctx.text, animation: "dsSlide .8s ease-out backwards" }}>
           <span
             aria-hidden="true"
@@ -1548,7 +1670,7 @@ function ContactConstruction({ ctx }) {
 
         {/* الفورم */}
         <div className="p-5 shadow-[0_18px_40px_-16px_rgba(0,0,0,0.35)]" style={{ background: accent, color: CONSTRUCTION_NAVY, animation: "dsSlideR .8s .15s ease-out backwards" }}>
-          <div className="grid grid-cols-2 gap-x-3 gap-y-3">
+          <div className="grid grid-cols-1 gap-x-3 gap-y-3 [.cq-md_&]:grid-cols-2">
             <label className="block">
               <span className={labelCls}>{L("Your Name (required)", "الاسم (مطلوب)")}</span>
               <input readOnly tabIndex={-1} className={inputCls} />
@@ -1568,7 +1690,7 @@ function ContactConstruction({ ctx }) {
                 <span className="text-[7px] text-slate-400">▼</span>
               </div>
             </label>
-            <label className="col-span-2 block">
+            <label className="block [.cq-md_&]:col-span-2">
               <span className={labelCls}>{L("Your Message", "رسالتك")}</span>
               <textarea readOnly tabIndex={-1} rows={4} className="w-full resize-none bg-white p-2 text-[10px] outline-none" />
             </label>
@@ -1665,7 +1787,7 @@ function Info2CorporateRed({ ctx }) {
 
   return (
     <div className="relative overflow-hidden bg-white px-6 py-10" style={{ color: navy }}>
-      <div className="grid grid-cols-[1fr_1.05fr] items-start gap-6">
+      <div className="grid grid-cols-1 items-start gap-8 [.cq-3xl_&]:grid-cols-[1fr_1.05fr] [.cq-3xl_&]:gap-6">
         <div>
           <Reveal x={-24} y={0}>
             <h3 className="text-[26px] font-light leading-tight">
@@ -1696,11 +1818,11 @@ function Info2CorporateRed({ ctx }) {
           </Reveal>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 [.cq-md_&]:grid-cols-2">
           {cards.map((it, i) => {
             const Icon = it.icon;
             return (
-              <Reveal key={i} delay={i * 130} className={i % 2 ? "mt-8" : ""}>
+              <Reveal key={i} delay={i * 130} className={i % 2 ? "[.cq-md_&]:mt-8" : ""}>
                 <div className="group h-full rounded-bl-md rounded-br-[44px] rounded-tl-[44px] rounded-tr-md bg-white p-4 shadow-[0_12px_36px_-14px_rgba(27,36,112,0.28)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_-14px_rgba(27,36,112,0.38)]">
                   <span className="flex h-11 w-11 items-center justify-center bg-slate-100 transition-colors duration-300 group-hover:bg-[var(--cr-accent)]" style={{ "--cr-accent": accent }}>
                     <Icon className="h-6 w-6 transition-colors duration-300 group-hover:text-white" strokeWidth={1.4} />
@@ -1739,7 +1861,7 @@ function ContactCorporateRed({ ctx }) {
         }}
       />
 
-      <div className="relative grid grid-cols-[1.7fr_1fr] items-center gap-6">
+      <div className="relative grid grid-cols-1 items-center gap-6 [.cq-3xl_&]:grid-cols-[1.7fr_1fr]">
         <Reveal x={-24} y={0}>
           <h3 className="text-[28px] font-light leading-[1.25]">
             <AccentTitle text={form.heading || c.contactHeading || "Xtra business have helped More than 1,200 companies"} accent={accent} />
@@ -1805,7 +1927,7 @@ function TestimonialsCorporateRed({ ctx }) {
         {form.subheading && <p className="mx-auto mt-2 max-w-md text-[11px] opacity-60">{form.subheading}</p>}
       </Reveal>
 
-      <div className="mx-auto mt-9 grid max-w-3xl grid-cols-4 gap-4">
+      <div className="mx-auto mt-9 grid max-w-3xl grid-cols-2 gap-6 [.cq-3xl_&]:grid-cols-4 [.cq-3xl_&]:gap-4">
         {stats.map((s, i) => (
           <Reveal key={i} delay={i * 120}>
             <CountUp to={s.n} suffix="%" className="block text-4xl font-bold leading-none" style={{ color: accent }} />
@@ -1849,7 +1971,7 @@ function IndustryCorporateRed({ ctx }) {
   return (
     <div className="relative bg-white pt-4" style={{ color: navy }}>
       <div className="mx-auto max-w-4xl px-6">
-        <Reveal className="grid grid-cols-[1.6fr_1fr] items-start gap-6">
+        <Reveal className="grid grid-cols-1 items-start gap-3 [.cq-3xl_&]:grid-cols-[1.6fr_1fr] [.cq-3xl_&]:gap-6">
           <h3 className="text-[24px] font-light leading-tight">
             <AccentTitle text={form.heading || "Our Industry Specialization Tailored to Your Needs"} accent={accent} />
           </h3>
@@ -1860,11 +1982,11 @@ function IndustryCorporateRed({ ctx }) {
       <div className="relative mt-8 pb-8">
         <div className="absolute inset-x-0 bottom-0 h-[48%]" style={{ background: navy }} aria-hidden="true" />
 
-        <div className="relative mx-auto grid max-w-4xl grid-cols-3 gap-4 px-10">
+        <div className="relative mx-auto grid max-w-4xl grid-cols-1 gap-4 px-10 [.cq-2xl_&]:grid-cols-3">
           {visible.map((p, i) => (
             <article
               key={`${start}-${i}`}
-              className="group overflow-hidden bg-white shadow-[0_14px_36px_-14px_rgba(27,36,112,0.35)]"
+              className={`group overflow-hidden bg-white shadow-[0_14px_36px_-14px_rgba(27,36,112,0.35)] ${i > 0 ? "hidden [.cq-2xl_&]:block" : ""}`}
               style={{ animation: `dsRise .6s ${i * 0.1}s ease-out backwards` }}
             >
               <div className="relative">
@@ -1914,7 +2036,7 @@ function FooterCorporateRed({ ctx }) {
   return (
     <div className="bg-white pt-5">
       <div className="relative overflow-hidden rounded-tl-[96px] px-7 pb-5 pt-10" style={{ background: ctx.bg, color: ctx.text }}>
-        <div className="grid grid-cols-[1.4fr_1fr_1fr] gap-6">
+        <div className="grid grid-cols-1 gap-8 [.cq-3xl_&]:grid-cols-[1.4fr_1fr_1fr] [.cq-3xl_&]:gap-6">
           <Reveal x={-24} y={0}>
             <h3 className="text-[24px] font-light leading-snug">
               {form.description || c.footerDescription || "Don’t Be a Stranger, Let’s Do Something Amazing Together…"}
@@ -1957,7 +2079,7 @@ function FooterCorporateRed({ ctx }) {
 
         <div className="my-6 h-px origin-left" style={{ background: "currentColor", opacity: 0.14, animation: "dsDraw 1s ease-out backwards" }} />
 
-        <Reveal delay={150} className="grid grid-cols-[1fr_1.4fr] items-center gap-6">
+        <Reveal delay={150} className="grid grid-cols-1 items-center gap-4 [.cq-2xl_&]:grid-cols-[1fr_1.4fr] [.cq-2xl_&]:gap-6">
           <div className="flex items-center gap-3">
             <Mail className="h-6 w-6 shrink-0" strokeWidth={1.4} />
             <p className="text-sm font-light">{L("Subscribe Our Weekly Newsletter", "اشترك في نشرتنا الأسبوعية")}</p>
@@ -2105,7 +2227,7 @@ function Info2Corporate({ ctx }) {
 
   return (
     <div className="relative overflow-hidden bg-white px-6 py-12 text-slate-900">
-      <div className="mx-auto grid max-w-4xl grid-cols-1 items-center gap-8 md:grid-cols-[1fr_1.05fr]">
+      <div className="mx-auto grid max-w-4xl grid-cols-1 items-center gap-8 [.cq-3xl_&]:grid-cols-[1fr_1.05fr]">
         <div>
           <Reveal x={isRtl ? 24 : -24} y={0}>
             <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">{L("Work Process", "مراحل العمل")}</p>
@@ -2132,9 +2254,9 @@ function Info2Corporate({ ctx }) {
           </ul>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 [.cq-md_&]:grid-cols-2">
           {steps.map((s, i) => (
-            <Reveal key={i} delay={i * 140} y={32} className={i % 2 ? "mt-10" : ""}>
+            <Reveal key={i} delay={i * 140} y={32} className={i % 2 ? "[.cq-md_&]:mt-10" : ""}>
               <div className="group relative h-full overflow-hidden bg-white p-5 shadow-[0_14px_40px_-16px_rgba(10,47,163,0.28)] transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_20px_44px_-14px_rgba(10,47,163,0.4)]">
                 <span
                   aria-hidden="true"
@@ -2172,7 +2294,7 @@ function ServicesVideoCorporate({ ctx }) {
 
   return (
     <div className="bg-white">
-      <div className="mx-auto grid max-w-5xl grid-cols-1 items-stretch md:grid-cols-[1fr_1.1fr]">
+      <div className="mx-auto grid max-w-5xl grid-cols-1 items-stretch [.cq-3xl_&]:grid-cols-[1fr_1.1fr]">
         <Reveal x={isRtl ? 30 : -30} y={0} className="relative min-h-[280px] overflow-hidden">
           <div
             className="absolute inset-0 bg-cover bg-center grayscale"
@@ -2197,11 +2319,11 @@ function ServicesVideoCorporate({ ctx }) {
           </div>
         </Reveal>
 
-        <div className="flex flex-col justify-center gap-7 px-6 py-10 md:py-12">
+        <div className="flex flex-col justify-center gap-7 px-6 py-10 [.cq-3xl_&]:py-12">
           {items.map((s, i) => {
             const Icon = s.icon;
             return (
-              <Reveal key={i} delay={i * 150} x={isRtl ? -24 : 24} y={0} className="group flex items-start gap-4 md:-ms-9">
+              <Reveal key={i} delay={i * 150} x={isRtl ? -24 : 24} y={0} className="group flex items-start gap-4 [.cq-3xl_&]:-ms-9">
                 <span className="relative z-10 flex h-14 w-14 shrink-0 items-center justify-center bg-white shadow-[0_10px_30px_-10px_rgba(0,0,0,0.25)] transition-all duration-300 group-hover:-translate-y-1" style={{ "--sv": CORP_ACCENT }}>
                   <Icon className="h-7 w-7 text-slate-900 transition-transform duration-500 group-hover:scale-110" strokeWidth={1.3} />
                 </span>
@@ -2267,7 +2389,7 @@ function BlogCorporate({ ctx }) {
       </Reveal>
 
       <div className="relative mx-auto mt-8 max-w-4xl px-10">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 [.cq-2xl_&]:grid-cols-3">
           {visible.map((p, i) => (
             <article key={`${start}-${i}`} className="group" style={{ animation: `${slideAnim} .55s ${i * 0.08}s ease-out backwards` }}>
               <div className="relative">
@@ -2322,7 +2444,7 @@ function FooterCorporate({ ctx }) {
       <div className="absolute inset-0" style={{ background: overlay }} aria-hidden="true" />
 
       <div className="relative z-10 mx-auto max-w-4xl">
-        <Reveal className="grid grid-cols-1 items-center gap-4 md:grid-cols-[1fr_1.4fr]">
+        <Reveal className="grid grid-cols-1 items-center gap-4 [.cq-3xl_&]:grid-cols-[1fr_1.4fr]">
           <h3 className="text-lg font-light uppercase">
             {L("Subscribe to our", "اشترك في")} <b className="font-black">{L("Newsletter", "نشرتنا البريدية")}</b>
           </h3>
@@ -2336,7 +2458,7 @@ function FooterCorporate({ ctx }) {
 
         <div className="my-6 h-px origin-left bg-white/20" style={{ animation: "dsDraw 1s ease-out backwards" }} />
 
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-[1.3fr_1fr_1fr_1fr]">
+        <div className="grid grid-cols-1 gap-8 [.cq-3xl_&]:grid-cols-[1.3fr_1fr_1fr_1fr]">
           <Reveal x={isRtl ? 24 : -24} y={0}>
             <Logo ctx={ctx} color={ctx.text} />
             <p className="mt-4 text-[10px] leading-relaxed opacity-85">
@@ -2406,7 +2528,7 @@ function AboutCompanyBusiness({ ctx }) {
   ];
   return (
     <div className="relative overflow-hidden px-6 py-12" style={{ background: BIZ_LIGHT, fontFamily: SERIF }}>
-      <div className="mx-auto grid max-w-4xl grid-cols-1 items-center gap-8 md:grid-cols-2">
+      <div className="mx-auto grid max-w-4xl grid-cols-1 items-center gap-8 [.cq-3xl_&]:grid-cols-2">
         <Reveal x={isRtl ? 30 : -30} y={0} className="relative mx-auto h-[320px] w-full max-w-[300px]">
           <span className="absolute inset-x-6 bottom-0 top-10 rounded-t-full bg-white/60" style={{ animation: "dsPulseGlow 5s ease-in-out infinite" }} />
           <img src={photo} alt="" className="relative h-full w-full rounded-t-[140px] object-cover object-top" style={{ animation: "dsFloatSoft 6s ease-in-out infinite" }} />
@@ -2418,7 +2540,7 @@ function AboutCompanyBusiness({ ctx }) {
             <h3 className="mt-3 text-[26px] font-bold leading-snug text-slate-900">{form.title || c.aboutHeading || L("We are team of expert people with creativity ideas", "نحن فريق من الخبراء أصحاب الأفكار الإبداعية")}</h3>
             <p className="mt-3 text-[11px] leading-relaxed text-slate-400">{form.paragraph || c.aboutParagraph || L("As an example, let’s take the content marketing process, It’s a process you’ll find in every Marketing Department out there.", "كمثال، لنأخذ عملية التسويق بالمحتوى، وهي عملية موجودة في كل قسم تسويق.")}</p>
           </Reveal>
-          <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-4">
+          <div className="mt-6 grid grid-cols-1 gap-x-4 gap-y-4 [.cq-md_&]:grid-cols-2">
             {items.map((it, i) => {
               const Icon = it.icon;
               return (
@@ -2453,7 +2575,7 @@ function ProcessRoadBusiness({ ctx }) {
   ];
   return (
     <div className="relative overflow-hidden bg-white px-6 py-12" style={{ fontFamily: SERIF }}>
-      <div className="mx-auto grid max-w-4xl grid-cols-1 items-center gap-8 md:grid-cols-[1.1fr_1fr]">
+      <div className="mx-auto grid max-w-4xl grid-cols-1 items-center gap-8 [.cq-3xl_&]:grid-cols-[1.1fr_1fr]">
         <div>
           <Reveal>
             <BizEyebrow>{L("About our company", "عن شركتنا")}</BizEyebrow>
@@ -2519,9 +2641,9 @@ function ProjectsBusiness({ ctx }) {
         <p className="mt-3 text-xs" style={{ color: accent }}>{L("Let’s check some of our perfect projects.", "تعالَ نستعرض بعض مشاريعنا المميزة.")}</p>
       </Reveal>
       <div className="relative mx-auto mt-8 max-w-4xl px-9">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 [.cq-2xl_&]:grid-cols-3">
           {visible.map((src, i) => (
-            <div key={`${start}-${i}`} className="group relative aspect-square overflow-hidden bg-slate-300 shadow-md" style={{ animation: `${anim} .55s ${i * 0.08}s ease-out backwards` }}>
+            <div key={`${start}-${i}`} className={`group relative aspect-square overflow-hidden bg-slate-300 shadow-md ${i > 0 ? "hidden [.cq-2xl_&]:block" : ""}`} style={{ animation: `${anim} .55s ${i * 0.08}s ease-out backwards` }}>
               <img src={src} alt="" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
               <span className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-30" style={{ background: accent }} />
             </div>
@@ -2573,7 +2695,7 @@ function TestimonialsBusiness({ ctx }) {
 
   return (
     <div className="bg-white px-6 py-12" style={{ fontFamily: SERIF }} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
-      <div className="mx-auto grid max-w-4xl grid-cols-1 items-center gap-8 md:grid-cols-2">
+      <div className="mx-auto grid max-w-4xl grid-cols-1 items-center gap-8 [.cq-3xl_&]:grid-cols-2">
         <Reveal x={isRtl ? 24 : -24} y={0}>
           <ThumbsUp className="h-10 w-10" style={{ color: accent }} strokeWidth={1.3} />
           <BizEyebrow className="mt-4">{L("Our testimonials", "آراء عملائنا")}</BizEyebrow>
@@ -2605,8 +2727,8 @@ function ContactBusiness({ ctx }) {
   const L = (en, ar) => (isRtl ? ar : en);
   return (
     <div className="px-6 pb-4 pt-8" style={{ background: BIZ_LIGHT, fontFamily: SERIF }}>
-      <Reveal className="mx-auto max-w-4xl rounded-b-[72px] bg-white px-10 pb-12 pt-10 shadow-[0_18px_50px_-20px_rgba(0,0,0,0.2)]">
-        <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
+      <Reveal className="mx-auto max-w-4xl rounded-b-[72px] bg-white px-6 pb-12 pt-10 [.cq-2xl_&]:px-10 shadow-[0_18px_50px_-20px_rgba(0,0,0,0.2)]">
+        <div className="flex flex-col items-start justify-between gap-6 [.cq-3xl_&]:flex-row [.cq-3xl_&]:items-center">
           <div>
             <h3 className="text-[24px] font-bold text-slate-900">
               <span style={{ color: accent }}>{L("Ready?", "جاهز؟")}</span> {form.heading || c.contactHeading || L("Start your own business", "ابدأ مشروعك الخاص")}
@@ -2638,7 +2760,7 @@ function FooterBusiness({ ctx }) {
   return (
     <div style={{ fontFamily: SERIF }}>
       <div className="px-7 pb-10 pt-10" style={{ background: BIZ_LIGHT }}>
-        <div className="mx-auto grid max-w-4xl grid-cols-1 gap-8 md:grid-cols-[1.5fr_1fr_1fr_1fr]">
+        <div className="mx-auto grid max-w-4xl grid-cols-1 gap-8 [.cq-3xl_&]:grid-cols-[1.5fr_1fr_1fr_1fr]">
           <Reveal x={isRtl ? 24 : -24} y={0}>
             <Logo ctx={ctx} color="#0f172a" />
             <p className="mt-5 text-[10px] leading-relaxed text-slate-600">{form.description || c.footerDescription || L("A company is any entity that engages in business. Companies can be structured in different ways. For example, your company can be a sole proprietorship, a partnership, or a corporation.", "الشركة هي أي كيان يمارس نشاطاً تجارياً، ويمكن أن تُنظَّم بطرق مختلفة.")}</p>
@@ -2693,7 +2815,7 @@ function ContactCorporate({ ctx }) {
   const field = "h-9 w-full border border-slate-200 bg-white px-3 text-[10px] text-slate-700 outline-none transition-colors duration-300 placeholder:text-slate-400 focus:border-[var(--cc)]";
   return (
     <div className="bg-slate-50 px-6 py-12 text-slate-900">
-      <div className="mx-auto grid max-w-4xl grid-cols-1 gap-8 md:grid-cols-[1fr_1.1fr]">
+      <div className="mx-auto grid max-w-4xl grid-cols-1 gap-8 [.cq-3xl_&]:grid-cols-[1fr_1.1fr]">
         <div>
           <Reveal x={isRtl ? 24 : -24} y={0}>
             <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">{L("Contact us", "تواصل معنا")}</p>
@@ -2721,7 +2843,7 @@ function ContactCorporate({ ctx }) {
         </div>
         <Reveal delay={150} x={isRtl ? -24 : 24} y={0}>
           <div className="space-y-3 bg-white p-6 shadow-[0_18px_46px_-18px_rgba(10,47,163,0.3)]" style={{ "--cc": CORP_ACCENT }}>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 [.cq-md_&]:grid-cols-2">
               <input readOnly tabIndex={-1} placeholder={L("Your name", "الاسم")} className={field} />
               <input readOnly tabIndex={-1} placeholder={L("Your email", "البريد الإلكتروني")} className={field} />
             </div>
@@ -2775,8 +2897,29 @@ const VARIANT_SECTIONS = {
   footer: { business: FooterBusiness, construction: FooterConstruction, "corporate-red": FooterCorporateRed, corporate: FooterCorporate },
 };
 
-export default function SectionDesignPreview({ section, form = {}, files = {}, isRtl }) {
-  const key = resolveVariant(section, form);
+// بيقيس عرض الإطار ويرجّع كلاسات cq-* (بديل للـ container queries، شغال على أي نسخة Tailwind)
+const BPS = [["md", 448], ["2xl", 672], ["3xl", 768], ["5xl", 1024], ["7xl", 1280]];
+function useBpClasses(ref) {
+  const [cls, setCls] = useState("");
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const update = () => {
+      const w = el.clientWidth;
+      setCls(BPS.filter(([, min]) => w >= min).map(([n]) => `cq-${n}`).join(" "));
+    };
+    update();
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ref]);
+  return cls;
+}
+
+// ─── Single section renderer (hooks لكل سكشن لوحده) ─────────────────────────
+function SectionBody({ section, form = {}, files = {}, isRtl, variant, embedded = false }) {
+  const key = variant && DESIGNS[variant] ? variant : resolveVariant(section, form);
   const d = DESIGNS[key] || {};
   const c = DESIGN_CONTENT[key] || {};
   const logo = useUrl(files?.logo, form.logo);
@@ -2797,32 +2940,152 @@ export default function SectionDesignPreview({ section, form = {}, files = {}, i
     .map((l, i) => ({ ...l, label: l.label || `Link ${i + 1}` }));
 
   const ctx = {
-    d, c, form, logo, image, links, isRtl,
+    d, c, form, logo, image, links, isRtl, embedded,
     brand: form.brandName || c.brand,
     bg: form.bgColor || defBg,
     text: form.textColor || defText,
   };
 
-  let body = null;
   if (section === "header") {
     const H = HEADERS[key] || HeaderBusiness;
-    body = <H ctx={ctx} />;
-  } else if (section === "hero") {
-    const H = HEROES[key] || HeroBusiness;
-    body = <H ctx={ctx} />;
-  } else if (section === "info") {
-    const Component = INFO_SECTIONS[key] || InfoBusiness;
-    body = <Component ctx={ctx} />;
-  } else if (SIMPLE[section]) {
-    const S = VARIANT_SECTIONS[section]?.[key] || SIMPLE[section];
-    body = <S ctx={ctx} />;
+    return <H ctx={ctx} />;
   }
+  if (section === "hero") {
+    const H = HEROES[key] || HeroBusiness;
+    return <H ctx={ctx} />;
+  }
+  if (section === "info") {
+    const Component = INFO_SECTIONS[key] || InfoBusiness;
+    return <Component ctx={ctx} />;
+  }
+  if (SIMPLE[section]) {
+    const S = VARIANT_SECTIONS[section]?.[key] || SIMPLE[section];
+    return <S ctx={ctx} />;
+  }
+  return null;
+}
 
+// معاينة سكشن واحد (بتتستخدم في صفحة اختيار التصميم)
+export default function SectionDesignPreview({ section, form = {}, files = {}, isRtl }) {
+  const key = resolveVariant(section, form);
+  const boxRef = useRef(null);
+  const bp = useBpClasses(boxRef);
   return (
-    <div key={`${section}-${key}`} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-md">
+    <div ref={boxRef} className={`${bp} overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-md`}>
       <style>{KF}</style>
       <Chrome />
-      {body}
+      <SectionBody section={section} form={form} files={files} isRtl={isRtl} variant={key} />
+    </div>
+  );
+}
+
+// ─── معاينة الموقع كامل بنفس الثيم ──────────────────────────────────────────
+// السكشن اللي بيتعدّل (editing) بياخد الـ form الحي، وباقي السكاشن بتاخد
+// سجلها المحفوظ من نفس الثيم (أو بيانات الثيم الافتراضية لو لسه مش متعمل).
+const SITE_ORDER = ["announcement", "header", "hero", "info", "info2", "testimonials", "contact", "footer"];
+const DEVICE_WIDTH = { desktop: "100%", tablet: 768, mobile: 390 };
+
+export function SiteDesignPreview({
+  variant,
+  editing,
+  form = {},
+  files = {},
+  allSections = {},
+  isRtl,
+  lang = "en",
+  device = "desktop",
+  focus = false,
+}) {
+  const scrollRef = useRef(null);
+  const frameRef = useRef(null);
+  const bp = useBpClasses(frameRef);
+  const nodes = useRef({});
+  const theme = DESIGNS[variant] ? variant : "business";
+
+  const items = useMemo(() => {
+    const seeds = buildSeed(theme, true);
+    return SITE_ORDER.map((s) => {
+      if (s === editing) return { s, data: form, rec: null, isEdit: true };
+      const list = Array.isArray(allSections?.[s]) ? allSections[s] : [];
+      const rec = list.find((r) => resolveVariant(s, r) === theme);
+      return { s, data: rec || seeds[s], rec, isEdit: false };
+    });
+  }, [theme, editing, form, allSections]);
+
+  // نمرّر للسكشن اللي بيتعدّل
+  useEffect(() => {
+    const root = scrollRef.current;
+    const el = nodes.current[editing];
+    if (!root || !el) return;
+    const t = setTimeout(() => {
+      const top = el.getBoundingClientRect().top - root.getBoundingClientRect().top + root.scrollTop - 8;
+      root.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    }, 120);
+    return () => clearTimeout(t);
+  }, [editing, theme, device, focus]);
+
+  const framed = device !== "desktop";
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-md">
+      <style>{KF}</style>
+      <Chrome />
+      <div
+        ref={scrollRef}
+        className="relative h-[68vh] min-h-[380px] overflow-x-hidden overflow-y-auto overscroll-contain bg-slate-100 lg:h-[calc(100vh-15rem)]"
+      >
+        <div
+          ref={frameRef}
+          className={`${bp} mx-auto bg-white transition-[max-width] duration-300 ease-out ${
+            framed ? "my-4 shadow-xl ring-1 ring-slate-300/70" : ""
+          }`}
+          style={{ maxWidth: DEVICE_WIDTH[device] || "100%" }}
+        >
+          {items.map(({ s, data, rec, isEdit }) => {
+            const cfg = SECTION_MAP[s];
+            const title = cfg?.title?.[lang] || s;
+            return (
+              <div
+                key={`${theme}-${s}`}
+                ref={(el) => {
+                  nodes.current[s] = el;
+                }}
+                data-section={s}
+                className={`group/sec relative overflow-hidden ${focus && !isEdit ? "hidden" : ""}`}
+              >
+                <SectionBody
+                  section={s}
+                  form={data || {}}
+                  files={isEdit ? files : {}}
+                  isRtl={isRtl}
+                  variant={theme}
+                  embedded
+                />
+
+                {isEdit ? (
+                  <>
+                    <div className="pointer-events-none absolute inset-0 z-40 ring-2 ring-inset ring-blue-500" />
+                    <span className="pointer-events-none absolute end-2 top-2 z-40 inline-flex max-w-[90%] items-center gap-1.5 rounded-full bg-blue-600 px-2.5 py-1 text-[10px] font-bold text-white shadow-lg">
+                      <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-white" />
+                      <span className="truncate">
+                        {isRtl ? "جاري التعديل" : "Editing"} · {title}
+                      </span>
+                    </span>
+                  </>
+                ) : (
+                  <Link
+                    to={`/admin/website/${s}/settings${rec?._id ? `?id=${rec._id}` : ""}`}
+                    className="absolute end-2 top-2 z-40 inline-flex max-w-[90%] items-center gap-1.5 rounded-full bg-slate-900/85 px-2.5 py-1 text-[10px] font-bold text-white opacity-0 shadow-lg backdrop-blur transition-opacity duration-200 focus-visible:opacity-100 group-hover/sec:opacity-100"
+                  >
+                    <Pencil className="h-3 w-3 shrink-0" />
+                    <span className="truncate">{title}</span>
+                  </Link>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }

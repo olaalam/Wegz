@@ -11,7 +11,10 @@ import {
   EyeOff,
   ArrowLeft,
   ShieldCheck,
-  RefreshCw
+  RefreshCw,
+  User,
+  Phone,
+  UserPlus
 } from "lucide-react";
 import { toast } from "sonner";
 import { usePost } from "../hooks/usePost";
@@ -28,6 +31,15 @@ const T = {
     passwordPlaceholder: "••••••••",
     btnLogin: "Sign In",
     copyright: `© ${new Date().getFullYear()} WeGz. All rights reserved.`,
+    
+    // Tabs & Register
+    tabLogin: "Sign In",
+    tabRegister: "Sign Up",
+    nameLabel: "Full Name",
+    namePlaceholder: "John Doe",
+    phoneLabel: "Phone Number",
+    phonePlaceholder: "+20 123 456 7890",
+    btnRegister: "Create Account",
 
     // Forgot Password
     forgotPassword: "Forgot Password?",
@@ -55,6 +67,15 @@ const T = {
     passwordPlaceholder: "••••••••",
     btnLogin: "دخول",
     copyright: `© ${new Date().getFullYear()} WeGz. جميع الحقوق محفوظة.`,
+
+    // Tabs & Register
+    tabLogin: "تسجيل الدخول",
+    tabRegister: "إنشاء حساب",
+    nameLabel: "الاسم الكامل",
+    namePlaceholder: "أحمد محمد",
+    phoneLabel: "رقم الهاتف",
+    phonePlaceholder: "01012345678",
+    btnRegister: "إنشاء حساب",
 
     // Forgot Password
     forgotPassword: "نسيت كلمة المرور؟",
@@ -92,12 +113,16 @@ export default function LoginPage() {
   const { execute, loading } = usePost();
 
   const [view, setView] = useState("auth"); // "auth" | "forgot_password" | "check_code" | "change_password"
+  const [authType, setAuthType] = useState("login"); // "login" | "register"
   const [error, setError] = useState(null);
 
   const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
 
   const [loginData, setLoginData] = useState({ email: "", password: "" });
+  const [registerData, setRegisterData] = useState({ name: "", email: "", phone: "", password: "" });
+  
   const [forgotPassEmail, setForgotPassEmail] = useState("");
   const [resetCode, setResetCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -125,7 +150,7 @@ export default function LoginPage() {
   const handleAuthSuccess = (data) => {
     saveAuthToStorage(data);
     dispatch(setAuth(data));
-    toast.success(lang === "ar" ? "تم تسجيل الدخول بنجاح!" : "Logged in successfully!");
+    toast.success(lang === "ar" ? "تم المصادقة بنجاح!" : "Authenticated successfully!");
     navigate("/themes", { replace: true });
   };
 
@@ -143,6 +168,23 @@ export default function LoginPage() {
       handleAuthSuccess(data);
     } else {
       const msg = result.error || (lang === "ar" ? "فشل تسجيل الدخول." : "Login failed.");
+      setError(msg);
+      toast.error(msg);
+    }
+  };
+
+  const handleRegisterSubmit = async (e) => {
+    e.preventDefault();
+    resetErrors();
+
+    const registerEndpoint = "/api/auth/register";
+    const result = await execute(registerEndpoint, registerData);
+
+    if (result.success) {
+      const data = result.data?.data ?? result.data ?? {};
+      handleAuthSuccess(data);
+    } else {
+      const msg = result.error || (lang === "ar" ? "فشل إنشاء الحساب." : "Registration failed.");
       setError(msg);
       toast.error(msg);
     }
@@ -235,56 +277,166 @@ export default function LoginPage() {
             </div>
 
             {view === "auth" && (
-              <form onSubmit={handleLoginSubmit} className="flex flex-col gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-[var(--foreground)] mb-1.5">{t.emailLabel}</label>
-                  <div className="relative flex items-center">
-                    <Mail className="w-4 h-4 absolute left-3 text-[var(--muted-foreground)] rtl:right-3 rtl:left-auto" />
-                    <input
-                      type="email"
-                      required
-                      value={loginData.email}
-                      onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
-                      placeholder={t.emailPlaceholder}
-                      disabled={isLoading}
-                      className="w-full pl-9 pr-3 rtl:pr-9 rtl:pl-3 py-2.5 text-xs rounded-xl border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all"
-                    />
-                  </div>
+              <>
+                {/* ── Tabs Switcher ──────────────────────────────────────────────── */}
+                <div className="flex bg-[var(--muted)] p-1 rounded-2xl mb-6 border border-[var(--border)]">
+                  <button
+                    type="button"
+                    onClick={() => { setAuthType("login"); resetErrors(); }}
+                    className={`flex-1 py-2 text-xs font-semibold rounded-xl transition-all ${
+                      authType === "login"
+                        ? "bg-[var(--card)] text-[var(--foreground)] shadow-sm"
+                        : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                    }`}
+                  >
+                    {t.tabLogin}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setAuthType("register"); resetErrors(); }}
+                    className={`flex-1 py-2 text-xs font-semibold rounded-xl transition-all ${
+                      authType === "register"
+                        ? "bg-[var(--card)] text-[var(--foreground)] shadow-sm"
+                        : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                    }`}
+                  >
+                    {t.tabRegister}
+                  </button>
                 </div>
 
-                <div>
-                  <div className="flex justify-between items-center mb-1.5">
-                    <label className="block text-xs font-medium text-[var(--foreground)]">{t.passwordLabel}</label>
-                    <button type="button" onClick={() => { setView("forgot_password"); resetErrors(); }} className="text-[10px] text-[var(--primary)] hover:underline">
-                      {t.forgotPassword}
-                    </button>
-                  </div>
-                  <div className="relative flex items-center">
-                    <Lock className="w-4 h-4 absolute left-3 text-[var(--muted-foreground)] rtl:right-3 rtl:left-auto" />
-                    <input
-                      type={showLoginPassword ? "text" : "password"}
-                      required
-                      value={loginData.password}
-                      onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                      placeholder={t.passwordPlaceholder}
-                      disabled={isLoading}
-                      className="w-full pl-9 pr-10 rtl:pr-9 rtl:pl-10 py-2.5 text-xs rounded-xl border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all"
-                    />
-                    <button type="button" onClick={() => setShowLoginPassword(!showLoginPassword)} className="absolute right-3 rtl:left-3 rtl:right-auto text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
-                      {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
+                {/* ── Login Form ─────────────────────────────────────────────────── */}
+                {authType === "login" ? (
+                  <form onSubmit={handleLoginSubmit} className="flex flex-col gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-[var(--foreground)] mb-1.5">{t.emailLabel}</label>
+                      <div className="relative flex items-center">
+                        <Mail className="w-4 h-4 absolute left-3 text-[var(--muted-foreground)] rtl:right-3 rtl:left-auto" />
+                        <input
+                          type="email"
+                          required
+                          value={loginData.email}
+                          onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                          placeholder={t.emailPlaceholder}
+                          disabled={isLoading}
+                          className="w-full pl-9 pr-3 rtl:pr-9 rtl:pl-3 py-2.5 text-xs rounded-xl border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all"
+                        />
+                      </div>
+                    </div>
 
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full flex items-center justify-center gap-2 mt-2 py-3 rounded-xl text-xs font-semibold bg-[var(--primary)] text-white hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 shadow-md shadow-[var(--primary)]/20"
-                >
-                  {isLoading ? <SpinnerIcon /> : <LogIn className="w-4 h-4" />}
-                  <span>{t.btnLogin}</span>
-                </button>
-              </form>
+                    <div>
+                      {/* <div className="flex justify-between items-center mb-1.5">
+                        <label className="block text-xs font-medium text-[var(--foreground)]">{t.passwordLabel}</label>
+                        <button type="button" onClick={() => { setView("forgot_password"); resetErrors(); }} className="text-[10px] text-[var(--primary)] hover:underline">
+                          {t.forgotPassword}
+                        </button>
+                      </div> */}
+                      <div className="relative flex items-center">
+                        <Lock className="w-4 h-4 absolute left-3 text-[var(--muted-foreground)] rtl:right-3 rtl:left-auto" />
+                        <input
+                          type={showLoginPassword ? "text" : "password"}
+                          required
+                          value={loginData.password}
+                          onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                          placeholder={t.passwordPlaceholder}
+                          disabled={isLoading}
+                          className="w-full pl-9 pr-10 rtl:pr-9 rtl:pl-10 py-2.5 text-xs rounded-xl border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all"
+                        />
+                        <button type="button" onClick={() => setShowLoginPassword(!showLoginPassword)} className="absolute right-3 rtl:left-3 rtl:right-auto text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+                          {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full flex items-center justify-center gap-2 mt-2 py-3 rounded-xl text-xs font-semibold bg-[var(--primary)] text-white hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 shadow-md shadow-[var(--primary)]/20"
+                    >
+                      {isLoading ? <SpinnerIcon /> : <LogIn className="w-4 h-4" />}
+                      <span>{t.btnLogin}</span>
+                    </button>
+                  </form>
+                ) : (
+                  /* ── Register Form ────────────────────────────────────────────── */
+                  <form onSubmit={handleRegisterSubmit} className="flex flex-col gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-[var(--foreground)] mb-1.5">{t.nameLabel}</label>
+                      <div className="relative flex items-center">
+                        <User className="w-4 h-4 absolute left-3 text-[var(--muted-foreground)] rtl:right-3 rtl:left-auto" />
+                        <input
+                          type="text"
+                          required
+                          value={registerData.name}
+                          onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
+                          placeholder={t.namePlaceholder}
+                          disabled={isLoading}
+                          className="w-full pl-9 pr-3 rtl:pr-9 rtl:pl-3 py-2.5 text-xs rounded-xl border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-[var(--foreground)] mb-1.5">{t.emailLabel}</label>
+                      <div className="relative flex items-center">
+                        <Mail className="w-4 h-4 absolute left-3 text-[var(--muted-foreground)] rtl:right-3 rtl:left-auto" />
+                        <input
+                          type="email"
+                          required
+                          value={registerData.email}
+                          onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
+                          placeholder={t.emailPlaceholder}
+                          disabled={isLoading}
+                          className="w-full pl-9 pr-3 rtl:pr-9 rtl:pl-3 py-2.5 text-xs rounded-xl border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-[var(--foreground)] mb-1.5">{t.phoneLabel}</label>
+                      <div className="relative flex items-center">
+                        <Phone className="w-4 h-4 absolute left-3 text-[var(--muted-foreground)] rtl:right-3 rtl:left-auto" />
+                        <input
+                          type="tel"
+                          required
+                          value={registerData.phone}
+                          onChange={(e) => setRegisterData({ ...registerData, phone: e.target.value })}
+                          placeholder={t.phonePlaceholder}
+                          disabled={isLoading}
+                          className="w-full pl-9 pr-3 rtl:pr-9 rtl:pl-3 py-2.5 text-xs rounded-xl border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-[var(--foreground)] mb-1.5">{t.passwordLabel}</label>
+                      <div className="relative flex items-center">
+                        <Lock className="w-4 h-4 absolute left-3 text-[var(--muted-foreground)] rtl:right-3 rtl:left-auto" />
+                        <input
+                          type={showRegisterPassword ? "text" : "password"}
+                          required
+                          value={registerData.password}
+                          onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                          placeholder={t.passwordPlaceholder}
+                          disabled={isLoading}
+                          className="w-full pl-9 pr-10 rtl:pr-9 rtl:pl-10 py-2.5 text-xs rounded-xl border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all"
+                        />
+                        <button type="button" onClick={() => setShowRegisterPassword(!showRegisterPassword)} className="absolute right-3 rtl:left-3 rtl:right-auto text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+                          {showRegisterPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full flex items-center justify-center gap-2 mt-2 py-3 rounded-xl text-xs font-semibold bg-[var(--primary)] text-white hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 shadow-md shadow-[var(--primary)]/20"
+                    >
+                      {isLoading ? <SpinnerIcon /> : <UserPlus className="w-4 h-4" />}
+                      <span>{t.btnRegister}</span>
+                    </button>
+                  </form>
+                )}
+              </>
             )}
 
             {view === "forgot_password" && (
